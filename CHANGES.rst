@@ -22,6 +22,10 @@ Revision 0.5.0, released XX-03-2020
   `StreamingDecoder` class. Previously published API is implemented
   as a thin wrapper on top of that ensuring backward compatibility.
 
+- Added support for Python 3.9, 3.10, 3.11
+- Removed support for EOL Python 3.5.
+- Added support for PyPy 3.7, 3.8, 3.9
+
 Revision 0.4.9, released XX-03-2020
 -----------------------------------
 
