@@ -1,5 +1,5 @@
 
-.. _pyasn1:
+.. _pyasn1-library:
 
 Library documentation
 =====================
