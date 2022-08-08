@@ -22,7 +22,7 @@ on:
 
 jobs:
   tests:
-    uses: /.github/workflows/main.yml
+    uses: ./.github/workflows/main.yml
   pypi:
     name: Build and upload to PyPI
     runs-on: ubuntu-latest
