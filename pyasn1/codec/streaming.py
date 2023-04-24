@@ -101,7 +101,7 @@ def asSeekableStream(substrate):
     if isinstance(substrate, io.BytesIO):
         return substrate
 
-    elif isinstance(substrate, bytes):
+    elif isinstance(substrate, (bytes, bytearray, memoryview)):
         return io.BytesIO(substrate)
 
     elif isinstance(substrate, univ.OctetString):
