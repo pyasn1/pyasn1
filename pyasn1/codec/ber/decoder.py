@@ -652,7 +652,9 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
 
             if length == -1 and component is eoo.endOfOctets:
                 break
-
+            if component == None:
+                # TODO: Not an error in this case?
+                break
             components.append(component)
             componentTypes.add(component.tagSet)
 
