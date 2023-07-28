@@ -1812,8 +1812,7 @@ class CompressedFilesTestCase(BaseTestCase):
             os.remove(path)
 
     def testZipfile(self):
-        # File from ZIP archive is a good example of non-seekable stream in Python 2.7
-        #   In Python 3.7, it is a seekable stream.
+        # File from ZIP archive is a seekable stream in Python 3.6+
         _, path = tempfile.mkstemp(suffix=".zip")
         try:
             with zipfile.ZipFile(path, "w") as myzip:
