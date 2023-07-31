@@ -1,7 +1,8 @@
 Revision 0.5.1, released xx-08-2023
 ---------------------------------------
 
-- Removed support for EOL Python 2
+- Removed support for EOL Python 2.7, 3.6, 3.7
+- Added support for PyPy 3.10
 
 Revision 0.5.0, released 19-04-2023
 ---------------------------------------
