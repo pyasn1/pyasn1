@@ -1,8 +1,14 @@
-Revision 0.6.0, released xx-03-2024
+Revision 0.6.0, released 26-03-2024
 ---------------------------------------
 
-- Removed support for EOL Python 2.7, 3.6, 3.7
 - Added support for previously missing `RELATIVE-OID` construct
+  [pr #48](https://github.com/pyasn1/pyasn1/pull/48/)
+- Updated link to Layman's Guide
+  Now it provides a link to links to a formatted PDF version of the paper,
+  at a stable domain (researchgate), using https
+  [pr #50](https://github.com/pyasn1/pyasn1/pull/50/)
+- Removed support for EOL Python 2.7, 3.6, 3.7
+  [pr #56](https://github.com/pyasn1/pyasn1/pull/56/)
 
 Revision 0.5.1, released 20-11-2023
 ---------------------------------------
