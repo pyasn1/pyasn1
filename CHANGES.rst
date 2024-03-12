@@ -1,6 +1,7 @@
-Revision 0.5.2, released xx-xx-2024
+Revision 0.6.0, released xx-03-2024
 ---------------------------------------
 
+- Removed support for EOL Python 2.7, 3.6, 3.7
 - Added support for previously missing `RELATIVE-OID` construct
 
 Revision 0.5.1, released 20-11-2023
