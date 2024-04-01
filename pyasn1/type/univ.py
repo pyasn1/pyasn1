@@ -643,8 +643,8 @@ class BitString(base.SimpleAsn1Type):
 
         Parameters
         ----------
-        value: :class:`str` (Py2) or :class:`bytes` (Py3)
-            Text string like '\\\\x01\\\\xff' (Py2) or b'\\\\x01\\\\xff' (Py3)
+        value: :class:`bytes`
+            Text string like b'\\\\x01\\\\xff'
         """
         value = SizedInteger(integer.from_bytes(value) >> padding).setBitLength(len(value) * 8 - padding)
 
@@ -721,15 +721,14 @@ class OctetString(base.SimpleAsn1Type):
     """Create |ASN.1| schema or value object.
 
     |ASN.1| class is based on :class:`~pyasn1.type.base.SimpleAsn1Type`, its
-    objects are immutable and duck-type Python 2 :class:`str` or
-    Python 3 :class:`bytes`. When used in Unicode context, |ASN.1| type
+    objects are immutable and duck-type :class:`bytes`.
+    When used in Unicode context, |ASN.1| type
     assumes "|encoding|" serialisation.
 
     Keyword Args
     ------------
     value: :class:`unicode`, :class:`str`, :class:`bytes` or |ASN.1| object
-        class:`str` (Python 2) or :class:`bytes` (Python 3), alternatively
-        class:`unicode` object (Python 2) or :class:`str` (Python 3)
+        :class:`bytes`, alternatively :class:`str`
         representing character string to be serialised into octets
         (note `encoding` parameter) or |ASN.1| object.
         If `value` is not given, schema object will be created.
@@ -743,8 +742,8 @@ class OctetString(base.SimpleAsn1Type):
         instantiation.
 
     encoding: :py:class:`str`
-        Unicode codec ID to encode/decode :class:`unicode` (Python 2) or
-        :class:`str` (Python 3) the payload when |ASN.1| object is used
+        Unicode codec ID to encode/decode
+        :class:`str` the payload when |ASN.1| object is used
         in text string context.
 
     binValue: :py:class:`str`
@@ -3336,15 +3335,14 @@ class Any(OctetString):
     """Create |ASN.1| schema or value object.
 
     |ASN.1| class is based on :class:`~pyasn1.type.base.SimpleAsn1Type`,
-    its objects are immutable and duck-type Python 2 :class:`str` or Python 3
-    :class:`bytes`. When used in Unicode context, |ASN.1| type assumes
+    its objects are immutable and duck-type :class:`bytes`.
+    When used in Unicode context, |ASN.1| type assumes
     "|encoding|" serialisation.
 
     Keyword Args
     ------------
     value: :class:`unicode`, :class:`str`, :class:`bytes` or |ASN.1| object
-        :class:`str` (Python 2) or :class:`bytes` (Python 3), alternatively
-        :class:`unicode` object (Python 2) or :class:`str` (Python 3)
+        :class:`bytes`, alternatively :class:`str`
         representing character string to be serialised into octets (note
         `encoding` parameter) or |ASN.1| object.
         If `value` is not given, schema object will be created.
@@ -3358,8 +3356,8 @@ class Any(OctetString):
         instantiation.
 
     encoding: :py:class:`str`
-        Unicode codec ID to encode/decode :class:`unicode` (Python 2) or
-        :class:`str` (Python 3) the payload when |ASN.1| object is used
+        Unicode codec ID to encode/decode
+        :class:`str` the payload when |ASN.1| object is used
         in text string context.
 
     binValue: :py:class:`str`

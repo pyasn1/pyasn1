@@ -922,7 +922,7 @@ class Encoder(object):
 #:
 #: Returns
 #: -------
-#: : :py:class:`bytes` (Python 3) or :py:class:`str` (Python 2)
+#: : :py:class:`bytes`
 #:     Given ASN.1 object encoded into BER octetstream
 #:
 #: Raises

@@ -1835,7 +1835,7 @@ class BytesIOTestCase(BaseTestCase):
 
 class UnicodeTestCase(BaseTestCase):
     def testFail(self):
-        # This ensures that str objects in Python 3.7 cannot be parsed.
+        # This ensures that str objects cannot be parsed.
         source = ints2octs((2, 1, 12, 35, 128, 3, 2, 0, 169, 3, 2, 1, 138, 0, 0)).decode("latin-1")
         try:
             next(decoder.StreamingDecoder(source))
