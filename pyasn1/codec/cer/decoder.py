@@ -101,7 +101,7 @@ class Decoder(decoder.Decoder):
 #:
 #: Parameters
 #: ----------
-#: substrate: :py:class:`bytes` (Python 3) or :py:class:`str` (Python 2)
+#: substrate: :py:class:`bytes`
 #:     CER octet-stream
 #:
 #: Keyword Args
