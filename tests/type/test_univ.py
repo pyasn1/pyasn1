@@ -18,7 +18,6 @@ from pyasn1.type import constraint
 from pyasn1.type import namedtype
 from pyasn1.type import namedval
 from pyasn1.type import error
-from pyasn1.compat.octets import str2octs, ints2octs, octs2ints, octs2str
 from pyasn1.error import PyAsn1Error
 from pyasn1.error import PyAsn1UnicodeEncodeError, PyAsn1UnicodeDecodeError
 
@@ -430,7 +429,7 @@ class BitStringTestCase(BaseTestCase):
         assert list(reversed(univ.BitString([0, 0, 1]))) == list(univ.BitString([1, 0, 0]))
 
     def testAsOctets(self):
-        assert self.b.clone(hexValue='A98A').asOctets() == ints2octs((0xa9, 0x8a)), 'testAsOctets() fails'
+        assert self.b.clone(hexValue='A98A').asOctets() == bytes((0xa9, 0x8a)), 'testAsOctets() fails'
 
     def testAsInts(self):
         assert self.b.clone(hexValue='A98A').asNumbers() == (0xa9, 0x8a), 'testAsNumbers() fails'
@@ -474,9 +473,9 @@ class OctetStringWithUnicodeMixIn(object):
     encoding = 'us-ascii'
 
     def setUp(self):
-        self.pythonString = ints2octs(self.initializer).decode(self.encoding)
+        self.pythonString = bytes(self.initializer).decode(self.encoding)
         self.encodedPythonString = self.pythonString.encode(self.encoding)
-        self.numbersString = tuple(octs2ints(self.encodedPythonString))
+        self.numbersString = tuple(self.encodedPythonString)
 
     def testInit(self):
         assert univ.OctetString(self.encodedPythonString) == self.encodedPythonString, '__init__() fails'
@@ -538,13 +537,9 @@ class OctetStringWithAsciiTestCase(OctetStringWithUnicodeMixIn, BaseTestCase):
 
 class OctetStringUnicodeErrorTestCase(BaseTestCase):
     def testEncodeError(self):
-        serialized = ints2octs((0xff, 0xfe))
+        serialized = bytes((0xff, 0xfe))
 
-        if sys.version_info < (3, 0):
-            text = serialized.decode('iso-8859-1')
-
-        else:
-            text = octs2str(serialized)
+        text = serialized.decode('iso-8859-1')
 
         try:
             univ.OctetString(text, encoding='us-ascii')
@@ -553,7 +548,7 @@ class OctetStringUnicodeErrorTestCase(BaseTestCase):
             pass
 
     def testDecodeError(self):
-        serialized = ints2octs((0xff, 0xfe))
+        serialized = bytes((0xff, 0xfe))
 
         octetString = univ.OctetString(serialized, encoding='us-ascii')
 
@@ -604,13 +599,13 @@ class OctetStringTestCase(BaseTestCase):
         assert HexDefault() == univ.OctetString(hexValue='FA9823C43E43510DE3422')
 
     def testBinStr(self):
-        assert univ.OctetString(binValue="1000010111101110101111000000111011") == ints2octs((133, 238, 188, 14, 192)), 'bin init fails'
+        assert univ.OctetString(binValue="1000010111101110101111000000111011") == bytes((133, 238, 188, 14, 192)), 'bin init fails'
 
     def testHexStr(self):
-        assert univ.OctetString(hexValue="FA9823C43E43510DE3422") == ints2octs((250, 152, 35, 196, 62, 67, 81, 13, 227, 66, 32)), 'hex init fails'
+        assert univ.OctetString(hexValue="FA9823C43E43510DE3422") == bytes((250, 152, 35, 196, 62, 67, 81, 13, 227, 66, 32)), 'hex init fails'
 
     def testTuple(self):
-        assert univ.OctetString((1, 2, 3, 4, 5)) == ints2octs((1, 2, 3, 4, 5)), 'tuple init failed'
+        assert univ.OctetString((1, 2, 3, 4, 5)) == bytes((1, 2, 3, 4, 5)), 'tuple init failed'
 
     def testRepr(self):
         assert 'abc' in repr(univ.OctetString('abc'))
@@ -634,7 +629,7 @@ class OctetStringTestCase(BaseTestCase):
         class OctetString(univ.OctetString):
             pass
 
-        assert OctetString(hexValue="FA9823C43E43510DE3422") == ints2octs((250, 152, 35, 196, 62, 67, 81, 13, 227, 66, 32))
+        assert OctetString(hexValue="FA9823C43E43510DE3422") == bytes((250, 152, 35, 196, 62, 67, 81, 13, 227, 66, 32))
 
 
 class OctetStringPicklingTestCase(unittest.TestCase):
@@ -659,10 +654,10 @@ class Null(BaseTestCase):
 
     def testInit(self):
         assert not univ.Null().isValue
-        assert univ.Null(0) == str2octs('')
-        assert univ.Null(False) == str2octs('')
-        assert univ.Null('') == str2octs('')
-        assert univ.Null(None) == str2octs('')
+        assert univ.Null(0) == b''
+        assert univ.Null(False) == b''
+        assert univ.Null('') == b''
+        assert univ.Null(None) == b''
 
         try:
             assert univ.Null(True)
@@ -1045,9 +1040,9 @@ class SequenceOf(BaseTestCase):
 
     def testSeq(self):
         self.s1.setComponentByPosition(0, univ.OctetString('abc'))
-        assert self.s1[0] == str2octs('abc'), 'set by idx fails'
+        assert self.s1[0] == b'abc', 'set by idx fails'
         self.s1[0] = 'cba'
-        assert self.s1[0] == str2octs('cba'), 'set by idx fails'
+        assert self.s1[0] == b'cba', 'set by idx fails'
 
     def testCmp(self):
         self.s1.clear()
@@ -1059,11 +1054,11 @@ class SequenceOf(BaseTestCase):
     def testSubtypeSpec(self):
         s = self.s1.clone(
             componentType=univ.OctetString().subtype(
-                subtypeSpec=constraint.SingleValueConstraint(str2octs('abc'))))
+                subtypeSpec=constraint.SingleValueConstraint(b'abc')))
         try:
             s.setComponentByPosition(
                 0, univ.OctetString().subtype(
-                    'abc', subtypeSpec=constraint.SingleValueConstraint(str2octs('abc'))))
+                    'abc', subtypeSpec=constraint.SingleValueConstraint(b'abc')))
         except PyAsn1Error:
             assert 0, 'constraint fails'
         try:
@@ -1091,7 +1086,7 @@ class SequenceOf(BaseTestCase):
     def testComponentConstraintsMatching(self):
         s = self.s1.clone()
         o = univ.OctetString().subtype(
-            subtypeSpec=constraint.ConstraintsUnion(constraint.SingleValueConstraint(str2octs('cba'))))
+            subtypeSpec=constraint.ConstraintsUnion(constraint.SingleValueConstraint(b'cba')))
         s.strictConstraints = True  # This requires types equality
         try:
             s.setComponentByPosition(0, o.clone('cba'))
@@ -1159,25 +1154,25 @@ class SequenceOf(BaseTestCase):
     def testGetItemSlice(self):
         s = self.s1.clone()
         s.extend(['xxx', 'yyy', 'zzz'])
-        assert s[:1] == [str2octs('xxx')]
-        assert s[-2:] == [str2octs('yyy'), str2octs('zzz')]
-        assert s[1:2] == [str2octs('yyy')]
+        assert s[:1] == [b'xxx']
+        assert s[-2:] == [b'yyy', b'zzz']
+        assert s[1:2] == [b'yyy']
 
     def testSetItem(self):
         s = self.s1.clone()
         s.append('xxx')
         s[2] = 'yyy'
         assert len(s) == 3
-        assert s[1] == str2octs('')
+        assert s[1] == b''
 
     def testSetItemSlice(self):
         s = self.s1.clone()
         s[:1] = ['xxx']
-        assert s == [str2octs('xxx')]
+        assert s == [b'xxx']
         s[-2:] = ['yyy', 'zzz']
-        assert s == [str2octs('yyy'), str2octs('zzz')]
+        assert s == [b'yyy', b'zzz']
         s[1:2] = ['yyy']
-        assert s == [str2octs('yyy'), str2octs('yyy')]
+        assert s == [b'yyy', b'yyy']
         assert len(s) == 2
 
     def testAppend(self):
@@ -1186,7 +1181,7 @@ class SequenceOf(BaseTestCase):
         assert len(self.s1) == 1
         self.s1.append('def')
         assert len(self.s1) == 2
-        assert list(self.s1) == [str2octs(x) for x in ['abc', 'def']]
+        assert list(self.s1) == [b'abc', b'def']
 
     def testExtend(self):
         self.s1.clear()
@@ -1194,31 +1189,31 @@ class SequenceOf(BaseTestCase):
         assert len(self.s1) == 1
         self.s1.extend(['def', 'ghi'])
         assert len(self.s1) == 3
-        assert list(self.s1) == [str2octs(x) for x in ['abc', 'def', 'ghi']]
+        assert list(self.s1) == [b'abc', b'def', b'ghi']
 
     def testCount(self):
         self.s1.clear()
         for x in ['abc', 'def', 'abc']:
             self.s1.append(x)
-        assert self.s1.count(str2octs('abc')) == 2
-        assert self.s1.count(str2octs('def')) == 1
-        assert self.s1.count(str2octs('ghi')) == 0
+        assert self.s1.count(b'abc') == 2
+        assert self.s1.count(b'def') == 1
+        assert self.s1.count(b'ghi') == 0
 
     def testIndex(self):
         self.s1.clear()
         for x in ['abc', 'def', 'abc']:
             self.s1.append(x)
-        assert self.s1.index(str2octs('abc')) == 0
-        assert self.s1.index(str2octs('def')) == 1
-        assert self.s1.index(str2octs('abc'), 1) == 2
+        assert self.s1.index(b'abc') == 0
+        assert self.s1.index(b'def') == 1
+        assert self.s1.index(b'abc', 1) == 2
 
     def testSort(self):
         self.s1.clear()
         self.s1[0] = 'b'
         self.s1[1] = 'a'
-        assert list(self.s1) == [str2octs('b'), str2octs('a')]
+        assert list(self.s1) == [b'b', b'a']
         self.s1.sort()
-        assert list(self.s1) == [str2octs('a'), str2octs('b')]
+        assert list(self.s1) == [b'a', b'b']
 
     def testStaticDef(self):
 
@@ -1228,7 +1223,7 @@ class SequenceOf(BaseTestCase):
         s = SequenceOf()
         s[0] = 'abc'
         assert len(s) == 1
-        assert s == [str2octs('abc')]
+        assert s == [b'abc']
 
     def testUntyped(self):
         n = univ.SequenceOf()
@@ -1264,7 +1259,7 @@ class SequenceOf(BaseTestCase):
         assert s.getComponentByPosition(0, default=None) is None
         s[0] = 'test'
         assert s.getComponentByPosition(0, default=None) is not None
-        assert s.getComponentByPosition(0, default=None) == str2octs('test')
+        assert s.getComponentByPosition(0, default=None) == b'test'
         s.clear()
         assert s.getComponentByPosition(0, default=None) is None
 
@@ -1277,7 +1272,7 @@ class SequenceOf(BaseTestCase):
         assert s.getComponentByPosition(0, instantiate=False) is univ.noValue
         s[0] = 'test'
         assert s.getComponentByPosition(0, instantiate=False) is not univ.noValue
-        assert s.getComponentByPosition(0, instantiate=False) == str2octs('test')
+        assert s.getComponentByPosition(0, instantiate=False) == b'test'
         s.clear()
         assert s.getComponentByPosition(0, instantiate=False) is univ.noValue
 
@@ -1289,7 +1284,7 @@ class SequenceOf(BaseTestCase):
         s = SequenceOf()
         s.setComponentByPosition(0, 'test')
 
-        assert s.getComponentByPosition(0) == str2octs('test')
+        assert s.getComponentByPosition(0) == b'test'
         assert len(s) == 1
         assert s.isValue
 
@@ -1307,7 +1302,7 @@ class SequenceOf(BaseTestCase):
         s = SequenceOf()
         s.setComponentByPosition(0, 'test')
 
-        assert s.getComponentByPosition(0) == str2octs('test')
+        assert s.getComponentByPosition(0) == b'test'
         assert s.isValue
 
         s.reset()
@@ -1363,7 +1358,7 @@ class SequenceOfPicklingTestCase(unittest.TestCase):
         assert serialised
         new_asn1 = pickle.loads(serialised)
         assert new_asn1
-        assert new_asn1 == [str2octs('test')]
+        assert new_asn1 == [b'test']
 
 
 class Sequence(BaseTestCase):
@@ -1388,11 +1383,11 @@ class Sequence(BaseTestCase):
 
     def testById(self):
         self.s1.setComponentByName('name', univ.OctetString('abc'))
-        assert self.s1.getComponentByName('name') == str2octs('abc'), 'set by name fails'
+        assert self.s1.getComponentByName('name') == b'abc', 'set by name fails'
 
     def testByKey(self):
         self.s1['name'] = 'abc'
-        assert self.s1['name'] == str2octs('abc'), 'set by key fails'
+        assert self.s1['name'] == b'abc', 'set by key fails'
 
     def testContains(self):
         assert 'name' in self.s1
@@ -1440,7 +1435,7 @@ class Sequence(BaseTestCase):
     def testComponentConstraintsMatching(self):
         s = self.s1.clone()
         o = univ.OctetString().subtype(
-            subtypeSpec=constraint.ConstraintsUnion(constraint.SingleValueConstraint(str2octs('cba'))))
+            subtypeSpec=constraint.ConstraintsUnion(constraint.SingleValueConstraint(b'cba')))
         s.strictConstraints = True  # This requires types equality
         try:
             s.setComponentByName('name', o.clone('cba'))
@@ -1528,23 +1523,23 @@ class Sequence(BaseTestCase):
         self.s1.setComponentByPosition(0, univ.OctetString('abc'))
         self.s1.setComponentByPosition(1, univ.OctetString('def'))
         self.s1.setComponentByPosition(2, univ.Integer(123))
-        assert list(self.s1.values()) == [str2octs('abc'), str2octs('def'), 123]
+        assert list(self.s1.values()) == [b'abc', b'def', 123]
 
     def testItems(self):
         self.s1.setComponentByPosition(0, univ.OctetString('abc'))
         self.s1.setComponentByPosition(1, univ.OctetString('def'))
         self.s1.setComponentByPosition(2, univ.Integer(123))
-        assert list(self.s1.items()) == [(x[0], str2octs(x[1])) for x in [('name', 'abc'), ('nick', 'def')]] + [('age', 123)]
+        assert list(self.s1.items()) == [('name', b'abc'), ('nick', b'def'), ('age', 123)]
 
     def testUpdate(self):
         self.s1.clear()
-        assert list(self.s1.values()) == [str2octs(''), str2octs(''), 34]
+        assert list(self.s1.values()) == [b'', b'', 34]
         self.s1.update(**{'name': 'abc', 'nick': 'def', 'age': 123})
-        assert list(self.s1.items()) == [(x[0], str2octs(x[1])) for x in [('name', 'abc'), ('nick', 'def')]] + [('age', 123)]
+        assert list(self.s1.items()) == [('name', b'abc'), ('nick', b'def'), ('age', 123)]
         self.s1.update(('name', 'ABC'))
-        assert list(self.s1.items()) == [(x[0], str2octs(x[1])) for x in [('name', 'ABC'), ('nick', 'def')]] + [('age', 123)]
+        assert list(self.s1.items()) == [('name', b'ABC'), ('nick', b'def'), ('age', 123)]
         self.s1.update(name='CBA')
-        assert list(self.s1.items()) == [(x[0], str2octs(x[1])) for x in [('name', 'CBA'), ('nick', 'def')]] + [('age', 123)]
+        assert list(self.s1.items()) == [('name', b'CBA'), ('nick', b'def'), ('age', 123)]
 
     def testStaticDef(self):
 
@@ -1557,7 +1552,7 @@ class Sequence(BaseTestCase):
 
         s = Sequence()
         s['name'] = 'abc'
-        assert s['name'] == str2octs('abc')
+        assert s['name'] == b'abc'
 
     def testGetComponentWithDefault(self):
 
@@ -1569,12 +1564,12 @@ class Sequence(BaseTestCase):
 
         s = Sequence()
 
-        assert s[0] == str2octs('')
+        assert s[0] == b''
         assert s.getComponentByPosition(1, default=None, instantiate=False) is None
         assert s.getComponentByName('nick', default=None) is None
         s[1] = 'test'
         assert s.getComponentByPosition(1, default=None) is not None
-        assert s.getComponentByPosition(1, default=None) == str2octs('test')
+        assert s.getComponentByPosition(1, default=None) == b'test'
         s.clear()
         assert s.getComponentByPosition(1, default=None) is None
 
@@ -1603,12 +1598,12 @@ class Sequence(BaseTestCase):
             )
 
         s = Sequence()
-        assert s[0] == str2octs('')
+        assert s[0] == b''
         assert s.getComponentByPosition(1, instantiate=False) is univ.noValue
         assert s.getComponentByName('nick', instantiate=False) is univ.noValue
         s[1] = 'test'
         assert s.getComponentByPosition(1, instantiate=False) is not univ.noValue
-        assert s.getComponentByPosition(1, instantiate=False) == str2octs('test')
+        assert s.getComponentByPosition(1, instantiate=False) == b'test'
         s.clear()
         assert s.getComponentByPosition(1, instantiate=False) is univ.noValue
 
@@ -1802,13 +1797,13 @@ class SequenceWithoutSchema(BaseTestCase):
         s = univ.Sequence()
         s.setComponentByPosition(0, univ.OctetString('abc'))
         s.setComponentByPosition(1, univ.Integer(123))
-        assert list(s.values()) == [str2octs('abc'), 123]
+        assert list(s.values()) == [b'abc', 123]
 
     def testItems(self):
         s = univ.Sequence()
         s.setComponentByPosition(0, univ.OctetString('abc'))
         s.setComponentByPosition(1, univ.Integer(123))
-        assert list(s.items()) == [('field-0', str2octs('abc')), ('field-1', 123)]
+        assert list(s.items()) == [('field-0', b'abc'), ('field-1', 123)]
 
     def testUpdate(self):
         s = univ.Sequence().clear()
@@ -1817,12 +1812,12 @@ class SequenceWithoutSchema(BaseTestCase):
         s.setComponentByPosition(1, univ.Integer(123))
         assert s
         assert list(s.keys()) == ['field-0', 'field-1']
-        assert list(s.values()) == [str2octs('abc'), 123]
-        assert list(s.items()) == [('field-0', str2octs('abc')), ('field-1', 123)]
+        assert list(s.values()) == [b'abc', 123]
+        assert list(s.items()) == [('field-0', b'abc'), ('field-1', 123)]
         s['field-0'] = univ.OctetString('def')
-        assert list(s.values()) == [str2octs('def'), 123]
+        assert list(s.values()) == [b'def', 123]
         s['field-1'] = univ.OctetString('ghi')
-        assert list(s.values()) == [str2octs('def'), str2octs('ghi')]
+        assert list(s.values()) == [b'def', b'ghi']
         try:
             s['field-2'] = univ.OctetString('xxx')
         except KeyError:
@@ -1880,7 +1875,7 @@ class SequencePicklingTestCase(unittest.TestCase):
         assert serialised
         new_asn1 = pickle.loads(serialised)
         assert new_asn1
-        assert new_asn1['name'] == str2octs('test')
+        assert new_asn1['name'] == b'test'
 
 
 class SetOf(BaseTestCase):
@@ -1896,9 +1891,9 @@ class SetOf(BaseTestCase):
 
     def testSeq(self):
         self.s1.setComponentByPosition(0, univ.OctetString('abc'))
-        assert self.s1[0] == str2octs('abc'), 'set by idx fails'
+        assert self.s1[0] == b'abc', 'set by idx fails'
         self.s1.setComponentByPosition(0, self.s1[0].clone('cba'))
-        assert self.s1[0] == str2octs('cba'), 'set by idx fails'
+        assert self.s1[0] == b'cba', 'set by idx fails'
 
     def testStaticDef(self):
 
@@ -1908,7 +1903,7 @@ class SetOf(BaseTestCase):
         s = SetOf()
         s[0] = 'abc'
         assert len(s) == 1
-        assert s == [str2octs('abc')]
+        assert s == [b'abc']
 
 
 
@@ -1929,7 +1924,7 @@ class SetOfPicklingTestCase(unittest.TestCase):
         assert serialised
         new_asn1 = pickle.loads(serialised)
         assert new_asn1
-        assert new_asn1 == [str2octs('test')]
+        assert new_asn1 == [b'test']
 
 
 class Set(BaseTestCase):
@@ -1955,13 +1950,13 @@ class Set(BaseTestCase):
         self.s1.setComponentByType(univ.OctetString.tagSet, 'abc')
         assert self.s1.getComponentByType(
             univ.OctetString.tagSet
-        ) == str2octs('abc'), 'set by name fails'
+        ) == b'abc', 'set by name fails'
 
     def testByTypeWithInstance(self):
         self.s1.setComponentByType(univ.OctetString.tagSet, univ.OctetString('abc'))
         assert self.s1.getComponentByType(
             univ.OctetString.tagSet
-        ) == str2octs('abc'), 'set by name fails'
+        ) == b'abc', 'set by name fails'
 
     def testGetTagMap(self):
         assert self.s1.tagMap.presentTypes == {
@@ -1996,7 +1991,7 @@ class Set(BaseTestCase):
 
         s = Set()
         s['name'] = 'abc'
-        assert s['name'] == str2octs('abc')
+        assert s['name'] == b'abc'
 
     def testGetComponentWithDefault(self):
 
@@ -2012,7 +2007,7 @@ class Set(BaseTestCase):
         assert s.getComponentByName('nick', default=None) is None
         s[1] = 'test'
         assert s.getComponentByPosition(1, default=None) is not None
-        assert s.getComponentByPosition(1, default=None) == str2octs('test')
+        assert s.getComponentByPosition(1, default=None) == b'test'
         s.clear()
         assert s.getComponentByPosition(1, default=None) is None
 
@@ -2031,7 +2026,7 @@ class Set(BaseTestCase):
         assert s.getComponentByType(univ.OctetString.tagSet, instantiate=False) is univ.noValue
         s[1] = 'test'
         assert s.getComponentByPosition(1, instantiate=False) is not univ.noValue
-        assert s.getComponentByPosition(1, instantiate=False) == str2octs('test')
+        assert s.getComponentByPosition(1, instantiate=False) == b'test'
         s.clear()
         assert s.getComponentByPosition(1, instantiate=False) is univ.noValue
 
@@ -2061,7 +2056,7 @@ class SetPicklingTestCase(unittest.TestCase):
         assert serialised
         new_asn1 = pickle.loads(serialised)
         assert new_asn1
-        assert new_asn1['name'] == str2octs('test')
+        assert new_asn1['name'] == b'test'
 
 
 class Choice(BaseTestCase):
@@ -2110,7 +2105,7 @@ class Choice(BaseTestCase):
         self.s1.setComponentByType(univ.OctetString.tagSet, 'abc')
         assert self.s1.getComponentByType(
             univ.OctetString.tagSet
-        ) == str2octs('abc')
+        ) == b'abc'
 
     def testOuterByTypeWithInstanceValue(self):
         self.s1.setComponentByType(
@@ -2118,7 +2113,7 @@ class Choice(BaseTestCase):
         )
         assert self.s1.getComponentByType(
             univ.OctetString.tagSet
-        ) == str2octs('abc')
+        ) == b'abc'
 
     def testInnerByTypeWithPythonValue(self):
         self.s1.setComponentByType(univ.Integer.tagSet, 123, innerFlag=True)
@@ -2136,11 +2131,11 @@ class Choice(BaseTestCase):
 
     def testCmp(self):
         self.s1.setComponentByName('name', univ.OctetString('abc'))
-        assert self.s1 == str2octs('abc'), '__cmp__() fails'
+        assert self.s1 == b'abc', '__cmp__() fails'
 
     def testGetComponent(self):
         self.s1.setComponentByType(univ.OctetString.tagSet, 'abc')
-        assert self.s1.getComponent() == str2octs('abc'), 'getComponent() fails'
+        assert self.s1.getComponent() == b'abc', 'getComponent() fails'
 
     def testGetName(self):
         self.s1.setComponentByType(univ.OctetString.tagSet, 'abc')
@@ -2148,7 +2143,7 @@ class Choice(BaseTestCase):
 
     def testSetComponentByPosition(self):
         self.s1.setComponentByPosition(0, univ.OctetString('Jim'))
-        assert self.s1 == str2octs('Jim')
+        assert self.s1 == b'Jim'
 
     def testClone(self):
         self.s1.setComponentByPosition(0, univ.OctetString('abc'))
@@ -2252,7 +2247,7 @@ class ChoicePicklingTestCase(unittest.TestCase):
         assert serialised
         new_asn1 = pickle.loads(serialised)
         assert new_asn1
-        assert new_asn1['name'] == str2octs('test')
+        assert new_asn1['name'] == b'test'
 
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])

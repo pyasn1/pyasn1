@@ -7,7 +7,6 @@
 from pyasn1 import error
 from pyasn1.codec.streaming import readFromStream
 from pyasn1.codec.ber import decoder
-from pyasn1.compat.octets import oct2int
 from pyasn1.type import univ
 
 __all__ = ['decode', 'StreamingDecoder']
@@ -30,7 +29,7 @@ class BooleanPayloadDecoder(decoder.AbstractSimplePayloadDecoder):
             if isinstance(chunk, SubstrateUnderrunError):
                 yield chunk
 
-        byte = oct2int(chunk[0])
+        byte = chunk[0]
 
         # CER/DER specifies encoding of TRUE as 0xFF and FALSE as 0x0, while
         # BER allows any non-zero value as TRUE; cf. sections 8.2.2. and 11.1 
