@@ -4,12 +4,8 @@
 # Copyright (c) 2005-2020, Ilya Etingof <etingof@gmail.com>
 # License: https://pyasn1.readthedocs.io/en/latest/license.html
 #
-import sys
 import platform
-
-from pyasn1.compat.octets import oct2int, null, ensureString
-
-
+import sys
 implementation = platform.python_implementation()
 
 if sys.version_info[0] < 3:
@@ -19,9 +15,9 @@ if sys.version_info[0] < 3:
         if not octets:
             return 0
 
-        value = long(b2a_hex(ensureString(octets)), 16)
+        value = long(b2a_hex(str(octets)), 16)
 
-        if signed and oct2int(octets[0]) & 0x80:
+        if signed and ord(octets[0]) & 0x80:
             return value - (1 << len(octets) * 8)
 
         return value
@@ -38,7 +34,7 @@ if sys.version_info[0] < 3:
             else:
                 raise OverflowError('can\'t convert negative int to unsigned')
         elif value == 0 and length == 0:
-            return null
+            return ''
         else:
             bits = 0
             valueToEncode = value
