@@ -17,7 +17,6 @@ from pyasn1.codec.streaming import isEndOfStream
 from pyasn1.codec.streaming import peekIntoStream
 from pyasn1.codec.streaming import readFromStream
 from pyasn1.compat import _MISSING
-from pyasn1.compat.integer import from_bytes
 from pyasn1.compat.octets import oct2int, octs2ints, ints2octs, null
 from pyasn1.error import PyAsn1Error
 from pyasn1.type import base
@@ -144,7 +143,7 @@ class IntegerPayloadDecoder(AbstractSimplePayloadDecoder):
                 yield chunk
 
         if chunk:
-            value = from_bytes(chunk, signed=True)
+            value = int.from_bytes(bytes(chunk), 'big', signed=True)
 
         else:
             value = 0
