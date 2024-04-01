@@ -597,17 +597,17 @@ class RealDecoderTestCase(BaseTestCase):
 
 class UniversalStringDecoderTestCase(BaseTestCase):
     def testDecoder(self):
-        assert decoder.decode(ints2octs((28, 12, 0, 0, 0, 97, 0, 0, 0, 98, 0, 0, 0, 99))) == (char.UniversalString(sys.version_info[0] >= 3 and 'abc' or unicode('abc')), null)
+        assert decoder.decode(ints2octs((28, 12, 0, 0, 0, 97, 0, 0, 0, 98, 0, 0, 0, 99))) == (char.UniversalString('abc'), null)
 
 
 class BMPStringDecoderTestCase(BaseTestCase):
     def testDecoder(self):
-        assert decoder.decode(ints2octs((30, 6, 0, 97, 0, 98, 0, 99))) == (char.BMPString(sys.version_info[0] >= 3 and 'abc' or unicode('abc')), null)
+        assert decoder.decode(ints2octs((30, 6, 0, 97, 0, 98, 0, 99))) == (char.BMPString('abc'), null)
 
 
 class UTF8StringDecoderTestCase(BaseTestCase):
     def testDecoder(self):
-        assert decoder.decode(ints2octs((12, 3, 97, 98, 99))) == (char.UTF8String(sys.version_info[0] >= 3 and 'abc' or unicode('abc')), null)
+        assert decoder.decode(ints2octs((12, 3, 97, 98, 99))) == (char.UTF8String('abc'), null)
 
 
 class SequenceOfDecoderTestCase(BaseTestCase):
@@ -1779,7 +1779,6 @@ class ErrorOnDecodingTestCase(BaseTestCase):
             'Unexpected rest of substrate after raw dump %r' % rest)
 
 
-@unittest.skipIf(sys.version_info < (3,), "Unsupported on Python 2")
 class BinaryFileTestCase(BaseTestCase):
     """Assure that decode works on open binary files."""
     def testOneObject(self):
