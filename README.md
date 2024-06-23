@@ -1,6 +1,7 @@
 
 ASN.1 library for Python
 ------------------------
+[![pyasn1 Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/pyasn1.svg 'pyasn1 Downloads Last Month by pip Trends')](https://piptrends.com/package/pyasn1)
 [![PyPI](https://img.shields.io/pypi/v/pyasn1.svg?maxAge=2592000)](https://pypi.org/project/pyasn1)
 [![Python Versions](https://img.shields.io/pypi/pyversions/pyasn1.svg)](https://pypi.org/project/pyasn1/)
 [![Build status](https://github.com/pyasn1/pyasn1/actions/workflows/main.yml/badge.svg)](https://github.com/pyasn1/pyasn1/actions/workflows/main.yml)
