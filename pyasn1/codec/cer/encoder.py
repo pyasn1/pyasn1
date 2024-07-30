@@ -6,7 +6,6 @@
 #
 from pyasn1 import error
 from pyasn1.codec.ber import encoder
-from pyasn1.compat.octets import str2octs, null
 from pyasn1.type import univ
 from pyasn1.type import useful
 
@@ -116,7 +115,7 @@ class SetOfEncoder(encoder.SequenceOfEncoder):
 
         # sort by serialised and padded components
         if len(chunks) > 1:
-            zero = str2octs('\x00')
+            zero = b'\x00'
             maxLen = max(map(len, chunks))
             paddedChunks = [
                 (x.ljust(maxLen, zero), x) for x in chunks
@@ -125,19 +124,19 @@ class SetOfEncoder(encoder.SequenceOfEncoder):
 
             chunks = [x[1] for x in paddedChunks]
 
-        return null.join(chunks), True, True
+        return b''.join(chunks), True, True
 
 
 class SequenceOfEncoder(encoder.SequenceOfEncoder):
     def encodeValue(self, value, asn1Spec, encodeFun, **options):
 
         if options.get('ifNotEmpty', False) and not len(value):
-            return null, True, True
+            return b'', True, True
 
         chunks = self._encodeComponents(
             value, asn1Spec, encodeFun, **options)
 
-        return null.join(chunks), True, True
+        return b''.join(chunks), True, True
 
 
 class SetEncoder(encoder.SequenceEncoder):
@@ -162,7 +161,7 @@ class SetEncoder(encoder.SequenceEncoder):
 
     def encodeValue(self, value, asn1Spec, encodeFun, **options):
 
-        substrate = null
+        substrate = b''
 
         comps = []
         compsMap = {}
