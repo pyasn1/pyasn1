@@ -18,7 +18,6 @@ from pyasn1.codec.streaming import peekIntoStream
 from pyasn1.codec.streaming import readFromStream
 from pyasn1.compat import _MISSING
 from pyasn1.compat.integer import from_bytes
-from pyasn1.compat.octets import oct2int, octs2ints, ints2octs, null
 from pyasn1.error import PyAsn1Error
 from pyasn1.type import base
 from pyasn1.type import char
@@ -220,7 +219,7 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        bitString = self.protoComponent.fromOctetString(null, internalFormat=True)
+        bitString = self.protoComponent.fromOctetString(b'', internalFormat=True)
 
         current_position = substrate.tell()
 
@@ -231,7 +230,7 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
                 if isinstance(component, SubstrateUnderrunError):
                     yield component
 
-            trailingBits = oct2int(component[0])
+            trailingBits = component[0]
             if trailingBits > 7:
                 raise error.PyAsn1Error(
                     'Trailing bits overflow %s' % trailingBits
@@ -260,7 +259,7 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        bitString = self.protoComponent.fromOctetString(null, internalFormat=True)
+        bitString = self.protoComponent.fromOctetString(b'', internalFormat=True)
 
         while True:  # loop over fragments
 
@@ -277,7 +276,7 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
             if component is eoo.endOfOctets:
                 break
 
-            trailingBits = oct2int(component[0])
+            trailingBits = component[0]
             if trailingBits > 7:
                 raise error.PyAsn1Error(
                     'Trailing bits overflow %s' % trailingBits
@@ -325,7 +324,7 @@ class OctetStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        header = null
+        header = b''
 
         original_position = substrate.tell()
         # head = popSubstream(substrate, length)
@@ -355,7 +354,7 @@ class OctetStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        header = null
+        header = b''
 
         while True:  # loop over fragments
 
@@ -417,8 +416,6 @@ class ObjectIdentifierPayloadDecoder(AbstractSimplePayloadDecoder):
         if not chunk:
             raise error.PyAsn1Error('Empty substrate')
 
-        chunk = octs2ints(chunk)
-
         oid = ()
         index = 0
         substrateLen = len(chunk)
@@ -477,8 +474,6 @@ class RelativeOIDPayloadDecoder(AbstractSimplePayloadDecoder):
         if not chunk:
             raise error.PyAsn1Error('Empty substrate')
 
-        chunk = octs2ints(chunk)
-
         reloid = ()
         index = 0
         substrateLen = len(chunk)
@@ -528,7 +523,7 @@ class RealPayloadDecoder(AbstractSimplePayloadDecoder):
             yield self._createComponent(asn1Spec, tagSet, 0.0, **options)
             return
 
-        fo = oct2int(chunk[0])
+        fo = chunk[0]
         chunk = chunk[1:]
         if fo & 0x80:  # binary encoding
             if not chunk:
@@ -540,7 +535,7 @@ class RealPayloadDecoder(AbstractSimplePayloadDecoder):
             n = (fo & 0x03) + 1
 
             if n == 4:
-                n = oct2int(chunk[0])
+                n = chunk[0]
                 chunk = chunk[1:]
 
             eo, chunk = chunk[:n], chunk[n:]
@@ -548,11 +543,11 @@ class RealPayloadDecoder(AbstractSimplePayloadDecoder):
             if not eo or not chunk:
                 raise error.PyAsn1Error('Real exponent screwed')
 
-            e = oct2int(eo[0]) & 0x80 and -1 or 0
+            e = eo[0] & 0x80 and -1 or 0
 
             while eo:  # exponent
                 e <<= 8
-                e |= oct2int(eo[0])
+                e |= eo[0]
                 eo = eo[1:]
 
             b = fo >> 4 & 0x03  # base bits
@@ -569,7 +564,7 @@ class RealPayloadDecoder(AbstractSimplePayloadDecoder):
 
             while chunk:  # value
                 p <<= 8
-                p |= oct2int(chunk[0])
+                p |= chunk[0]
                 chunk = chunk[1:]
 
             if fo & 0x40:  # sign bit
@@ -1345,7 +1340,7 @@ class AnyPayloadDecoder(AbstractSimplePayloadDecoder):
 
         if isTagged:
             # tagged Any type -- consume header substrate
-            chunk = null
+            chunk = b''
 
             if LOG:
                 LOG('decoding as tagged ANY')
@@ -1529,7 +1524,7 @@ for typeDecoder in TAG_MAP.values():
  stStop) = [x for x in range(10)]
 
 
-EOO_SENTINEL = ints2octs((0, 0))
+EOO_SENTINEL = bytes((0, 0))
 
 
 class SingleItemDecoder(object):
@@ -1687,7 +1682,7 @@ class SingleItemDecoder(object):
                     length = 0
                     for lengthOctet in encodedLength:
                         length <<= 8
-                        length |= oct2int(lengthOctet)
+                        length |= lengthOctet
                     size += 1
 
                 else:  # 128 means indefinite
@@ -2119,7 +2114,7 @@ class Decoder(object):
                 tail = next(readFromStream(substrate))
 
             except error.EndOfStreamError:
-                tail = null
+                tail = b''
 
             return asn1Object, tail
 
