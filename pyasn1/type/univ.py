@@ -10,7 +10,6 @@ import sys
 from pyasn1 import error
 from pyasn1.codec.ber import eoo
 from pyasn1.compat import integer
-from pyasn1.compat import octets
 from pyasn1.type import base
 from pyasn1.type import constraint
 from pyasn1.type import namedtype
@@ -545,7 +544,7 @@ class BitString(base.SimpleAsn1Type):
         If |ASN.1| object length is not a multiple of 8, result
         will be left-padded with zeros.
         """
-        return tuple(octets.octs2ints(self.asOctets()))
+        return tuple(self.asOctets())
 
     def asOctets(self):
         """Get |ASN.1| value as a sequence of octets.
@@ -640,7 +639,7 @@ class BitString(base.SimpleAsn1Type):
     def prettyIn(self, value):
         if isinstance(value, SizedInteger):
             return value
-        elif octets.isStringType(value):
+        elif isinstance(value, str):
             if not value:
                 return SizedInteger(0).setBitLength(0)
 
@@ -914,7 +913,7 @@ class OctetString(base.SimpleAsn1Type):
 
         r.append(byte)
 
-        return octets.ints2octs(r)
+        return bytes(r)
 
     @staticmethod
     def fromHexString(value):
@@ -936,7 +935,7 @@ class OctetString(base.SimpleAsn1Type):
         if p:
             r.append(int(p + '0', 16))
 
-        return octets.ints2octs(r)
+        return bytes(r)
 
     # Immutable sequence object protocol
 
@@ -1017,7 +1016,7 @@ class Null(OctetString):
     tagSet = tag.initTagSet(
         tag.Tag(tag.tagClassUniversal, tag.tagFormatSimple, 0x05)
     )
-    subtypeSpec = OctetString.subtypeSpec + constraint.SingleValueConstraint(octets.str2octs(''))
+    subtypeSpec = OctetString.subtypeSpec + constraint.SingleValueConstraint(b'')
 
     # Optimization for faster codec lookup
     typeId = OctetString.getTypeId()
@@ -1026,7 +1025,7 @@ class Null(OctetString):
         if value:
             return value
 
-        return octets.str2octs('')
+        return b''
 
 
 class ObjectIdentifier(base.SimpleAsn1Type):
@@ -1138,7 +1137,7 @@ class ObjectIdentifier(base.SimpleAsn1Type):
     def prettyIn(self, value):
         if isinstance(value, ObjectIdentifier):
             return tuple(value)
-        elif octets.isStringType(value):
+        elif isinstance(value, str):
             if '-' in value:
                 raise error.PyAsn1Error(
                     'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
@@ -1266,7 +1265,7 @@ class RelativeOID(base.SimpleAsn1Type):
     def prettyIn(self, value):
         if isinstance(value, RelativeOID):
             return tuple(value)
-        elif octets.isStringType(value):
+        elif isinstance(value, str):
             if '-' in value:
                 raise error.PyAsn1Error(
                     'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
@@ -1391,8 +1390,8 @@ class Real(base.SimpleAsn1Type):
             return value
         elif isinstance(value, int):
             return self.__normalizeBase10((value, 10, 0))
-        elif isinstance(value, float) or octets.isStringType(value):
-            if octets.isStringType(value):
+        elif isinstance(value, float) or isinstance(value, str):
+            if isinstance(value, str):
                 try:
                     value = float(value)
                 except ValueError:
@@ -2244,7 +2243,7 @@ class SequenceAndSetBase(base.ConstructedAsn1Type):
         self._dynamicNames = self._componentTypeLen or self.DynamicNames()
 
     def __getitem__(self, idx):
-        if octets.isStringType(idx):
+        if isinstance(idx, str):
             try:
                 return self.getComponentByName(idx)
 
@@ -2261,7 +2260,7 @@ class SequenceAndSetBase(base.ConstructedAsn1Type):
                 raise IndexError(sys.exc_info()[1])
 
     def __setitem__(self, idx, value):
-        if octets.isStringType(idx):
+        if isinstance(idx, str):
             try:
                 self.setComponentByName(idx, value)
 
