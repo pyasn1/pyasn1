@@ -339,23 +339,18 @@ class Boolean(Integer):
     # Optimization for faster codec lookup
     typeId = Integer.getTypeId()
 
-if sys.version_info[0] < 3:
-    SizedIntegerBase = long
-else:
-    SizedIntegerBase = int
 
-
-class SizedInteger(SizedIntegerBase):
+class SizedInteger(int):
     bitLength = leadingZeroBits = None
 
     def setBitLength(self, bitLength):
         self.bitLength = bitLength
-        self.leadingZeroBits = max(bitLength - integer.bitLength(self), 0)
+        self.leadingZeroBits = max(bitLength - self.bit_length(), 0)
         return self
 
     def __len__(self):
         if self.bitLength is None:
-            self.setBitLength(integer.bitLength(self))
+            self.setBitLength(self.bit_length())
 
         return self.bitLength
 
@@ -645,7 +640,7 @@ class BitString(base.SimpleAsn1Type):
         value: :class:`str` (Py2) or :class:`bytes` (Py3)
             Text string like '\\\\x01\\\\xff' (Py2) or b'\\\\x01\\\\xff' (Py3)
         """
-        value = SizedInteger(integer.from_bytes(value) >> padding).setBitLength(len(value) * 8 - padding)
+        value = SizedInteger(int.from_bytes(bytes(value), 'big') >> padding).setBitLength(len(value) * 8 - padding)
 
         if prepend is not None:
             value = SizedInteger(
