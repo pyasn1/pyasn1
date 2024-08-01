@@ -31,9 +31,9 @@ class AbstractConstraint(object):
         try:
             self._testValue(value, idx)
 
-        except error.ValueConstraintError:
+        except error.ValueConstraintError as exc:
             raise error.ValueConstraintError(
-                '%s failed at: %r' % (self, sys.exc_info()[1])
+                '%s failed at: %r' % (self, exc)
             )
 
     def __repr__(self):

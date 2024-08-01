@@ -104,8 +104,7 @@ class AbstractCharacterString(univ.OctetString):
         def __bytes__(self):
             try:
                 return self._value.encode(self.encoding)
-            except UnicodeEncodeError:
-                exc = sys.exc_info()[1]
+            except UnicodeEncodeError as exc:
                 raise error.PyAsn1UnicodeEncodeError(
                     "Can't encode string '%s' with codec "
                     "%s" % (self._value, self.encoding), exc
@@ -124,8 +123,7 @@ class AbstractCharacterString(univ.OctetString):
                 else:
                     return str(value)
 
-            except (UnicodeDecodeError, LookupError):
-                exc = sys.exc_info()[1]
+            except (UnicodeDecodeError, LookupError) as exc:
                 raise error.PyAsn1UnicodeDecodeError(
                     "Can't decode string '%s' with codec "
                     "%s" % (value, self.encoding), exc
