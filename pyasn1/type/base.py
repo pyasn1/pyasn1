@@ -228,7 +228,7 @@ class NoValue(object):
 
         return cls._instance
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str):
         if attr in self.skipMethods:
             raise AttributeError('Attribute %s not present' % attr)
 
