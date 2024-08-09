@@ -4,6 +4,8 @@
 # Copyright (c) 2005-2020, Ilya Etingof <etingof@gmail.com>
 # License: https://pyasn1.readthedocs.io/en/latest/license.html
 #
+import warnings
+
 from pyasn1 import debug
 from pyasn1 import error
 from pyasn1.compat import _MISSING
@@ -133,11 +135,6 @@ TYPE_MAP = {
 }
 
 
-# deprecated aliases, https://github.com/pyasn1/pyasn1/issues/9
-tagMap = TAG_MAP
-typeMap = TYPE_MAP
-
-
 class SingleItemDecoder(object):
 
     TAG_MAP = TAG_MAP
@@ -239,3 +236,12 @@ class Decoder(object):
 #:     1 2 3
 #:
 decode = Decoder()
+
+def __getattr__(attr: str):
+    if attr == "tagMap":
+        warnings.warn("tagMap is deprecated. Please use TAG_MAP instead.", DeprecationWarning)
+        return TAG_MAP
+    if attr == "typeMap":
+        warnings.warn("typeMap is deprecated. Please use TYPE_MAP instead.", DeprecationWarning)
+        return TYPE_MAP
+    raise AttributeError(attr)
