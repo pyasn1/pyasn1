@@ -1999,14 +1999,14 @@ class Decoder(object):
     def __call__(cls, substrate, asn1Spec=None, **options):
         """Turns BER/CER/DER octet stream into an ASN.1 object.
 
-        Takes BER/CER/DER octet-stream in form of :py:class:`bytes` (Python 3)
-        or :py:class:`str` (Python 2) and decode it into an ASN.1 object
+        Takes BER/CER/DER octet-stream in form of :py:class:`bytes`
+        and decode it into an ASN.1 object
         (e.g. :py:class:`~pyasn1.type.base.PyAsn1Item` derivative) which
         may be a scalar or an arbitrary nested structure.
 
         Parameters
         ----------
-        substrate: :py:class:`bytes` (Python 3) or :py:class:`str` (Python 2)
+        substrate: :py:class:`bytes`
             BER/CER/DER octet-stream to parse
 
         Keyword Args
@@ -2136,7 +2136,7 @@ class Decoder(object):
 #:
 #: Parameters
 #: ----------
-#: substrate: :py:class:`bytes` (Python 3) or :py:class:`str` (Python 2)
+#: substrate: :py:class:`bytes`
 #:     BER octet-stream
 #:
 #: Keyword Args
