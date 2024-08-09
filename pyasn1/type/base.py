@@ -290,7 +290,9 @@ class SimpleAsn1Type(Asn1Type):
         return '<%s>' % representation
 
     def __eq__(self, other):
-        return self is other or self._value == other
+        if self is other:
+            return True
+        return self._value == other
 
     def __ne__(self, other):
         return self._value != other
