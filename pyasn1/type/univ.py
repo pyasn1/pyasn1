@@ -164,39 +164,22 @@ class Integer(base.SimpleAsn1Type):
     def __rfloordiv__(self, value):
         return self.clone(value // self._value)
 
-    if sys.version_info[0] <= 2:
-        def __div__(self, value):
-            if isinstance(value, float):
-                return Real(self._value / value)
-            else:
-                return self.clone(self._value / value)
+    def __truediv__(self, value):
+        return Real(self._value / value)
 
-        def __rdiv__(self, value):
-            if isinstance(value, float):
-                return Real(value / self._value)
-            else:
-                return self.clone(value / self._value)
-    else:
-        def __truediv__(self, value):
-            return Real(self._value / value)
+    def __rtruediv__(self, value):
+        return Real(value / self._value)
 
-        def __rtruediv__(self, value):
-            return Real(value / self._value)
+    def __divmod__(self, value):
+        return self.clone(divmod(self._value, value))
 
-        def __divmod__(self, value):
-            return self.clone(divmod(self._value, value))
+    def __rdivmod__(self, value):
+        return self.clone(divmod(value, self._value))
 
-        def __rdivmod__(self, value):
-            return self.clone(divmod(value, self._value))
-
-        __hash__ = base.SimpleAsn1Type.__hash__
+    __hash__ = base.SimpleAsn1Type.__hash__
 
     def __int__(self):
         return int(self._value)
-
-    if sys.version_info[0] <= 2:
-        def __long__(self):
-            return long(self._value)
 
     def __float__(self):
         return float(self._value)
@@ -550,10 +533,6 @@ class BitString(base.SimpleAsn1Type):
     def __float__(self):
         return float(self._value)
 
-    if sys.version_info[0] < 3:
-        def __long__(self):
-            return self._value
-
     def asNumbers(self):
         """Get |ASN.1| value as a sequence of 8-bit integers.
 
@@ -702,7 +681,7 @@ class BitString(base.SimpleAsn1Type):
         elif isinstance(value, BitString):
             return SizedInteger(value).setBitLength(len(value))
 
-        elif isinstance(value, intTypes):
+        elif isinstance(value, int):
             return SizedInteger(value)
 
         else:
@@ -815,101 +794,52 @@ class OctetString(base.SimpleAsn1Type):
 
         base.SimpleAsn1Type.__init__(self, value, **kwargs)
 
-    if sys.version_info[0] <= 2:
-        def prettyIn(self, value):
-            if isinstance(value, str):
-                return value
+    def prettyIn(self, value):
+        if isinstance(value, bytes):
+            return value
 
-            elif isinstance(value, unicode):
-                try:
-                    return value.encode(self.encoding)
-
-                except (LookupError, UnicodeEncodeError):
-                    exc = sys.exc_info()[1]
-                    raise error.PyAsn1UnicodeEncodeError(
-                        "Can't encode string '%s' with codec "
-                        "%s" % (value, self.encoding), exc
-                    )
-
-            elif isinstance(value, (tuple, list)):
-                try:
-                    return ''.join([chr(x) for x in value])
-
-                except ValueError:
-                    raise error.PyAsn1Error(
-                        "Bad %s initializer '%s'" % (self.__class__.__name__, value)
-                    )
-
-            else:
-                return str(value)
-
-        def __str__(self):
-            return str(self._value)
-
-        def __unicode__(self):
+        elif isinstance(value, str):
             try:
-                return self._value.decode(self.encoding)
+                return value.encode(self.encoding)
 
-            except UnicodeDecodeError:
+            except UnicodeEncodeError:
                 exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeDecodeError(
-                    "Can't decode string '%s' with codec "
-                    "%s" % (self._value, self.encoding), exc
+                raise error.PyAsn1UnicodeEncodeError(
+                    "Can't encode string '%s' with '%s' "
+                    "codec" % (value, self.encoding), exc
                 )
+        elif isinstance(value, OctetString):  # a shortcut, bytes() would work the same way
+            return value.asOctets()
 
-        def asOctets(self):
-            return str(self._value)
+        elif isinstance(value, base.SimpleAsn1Type):  # this mostly targets Integer objects
+            return self.prettyIn(str(value))
 
-        def asNumbers(self):
-            return tuple([ord(x) for x in self._value])
+        elif isinstance(value, (tuple, list)):
+            return self.prettyIn(bytes(value))
 
-    else:
-        def prettyIn(self, value):
-            if isinstance(value, bytes):
-                return value
+        else:
+            return bytes(value)
 
-            elif isinstance(value, str):
-                try:
-                    return value.encode(self.encoding)
+    def __str__(self):
+        try:
+            return self._value.decode(self.encoding)
 
-                except UnicodeEncodeError:
-                    exc = sys.exc_info()[1]
-                    raise error.PyAsn1UnicodeEncodeError(
-                        "Can't encode string '%s' with '%s' "
-                        "codec" % (value, self.encoding), exc
-                    )
-            elif isinstance(value, OctetString):  # a shortcut, bytes() would work the same way
-                return value.asOctets()
+        except UnicodeDecodeError:
+            exc = sys.exc_info()[1]
+            raise error.PyAsn1UnicodeDecodeError(
+                "Can't decode string '%s' with '%s' codec at "
+                "'%s'" % (self._value, self.encoding,
+                            self.__class__.__name__), exc
+            )
 
-            elif isinstance(value, base.SimpleAsn1Type):  # this mostly targets Integer objects
-                return self.prettyIn(str(value))
+    def __bytes__(self):
+        return bytes(self._value)
 
-            elif isinstance(value, (tuple, list)):
-                return self.prettyIn(bytes(value))
+    def asOctets(self):
+        return bytes(self._value)
 
-            else:
-                return bytes(value)
-
-        def __str__(self):
-            try:
-                return self._value.decode(self.encoding)
-
-            except UnicodeDecodeError:
-                exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeDecodeError(
-                    "Can't decode string '%s' with '%s' codec at "
-                    "'%s'" % (self._value, self.encoding,
-                              self.__class__.__name__), exc
-                )
-
-        def __bytes__(self):
-            return bytes(self._value)
-
-        def asOctets(self):
-            return bytes(self._value)
-
-        def asNumbers(self):
-            return tuple(self._value)
+    def asNumbers(self):
+        return tuple(self._value)
 
     #
     # Normally, `.prettyPrint()` is called from `__str__()`. Historically,
@@ -1091,13 +1021,6 @@ class Null(OctetString):
             return value
 
         return b''
-
-if sys.version_info[0] <= 2:
-    intTypes = (int, long)
-else:
-    intTypes = (int,)
-
-numericTypes = intTypes + (float,)
 
 
 class ObjectIdentifier(base.SimpleAsn1Type):
@@ -1446,9 +1369,9 @@ class Real(base.SimpleAsn1Type):
 
     def prettyIn(self, value):
         if isinstance(value, tuple) and len(value) == 3:
-            if (not isinstance(value[0], numericTypes) or
-                    not isinstance(value[1], intTypes) or
-                    not isinstance(value[2], intTypes)):
+            if (not isinstance(value[0], (int, float)) or
+                    not isinstance(value[1], int) or
+                    not isinstance(value[2], int)):
                 raise error.PyAsn1Error('Lame Real value syntax: %s' % (value,))
             if (isinstance(value[0], float) and
                     self._inf and value[0] in self._inf):
@@ -1460,7 +1383,7 @@ class Real(base.SimpleAsn1Type):
             if value[1] == 10:
                 value = self.__normalizeBase10(value)
             return value
-        elif isinstance(value, intTypes):
+        elif isinstance(value, int):
             return self.__normalizeBase10((value, 10, 0))
         elif isinstance(value, float) or isinstance(value, str):
             if isinstance(value, str):
@@ -1550,31 +1473,20 @@ class Real(base.SimpleAsn1Type):
     def __rpow__(self, value):
         return self.clone(pow(value, float(self)))
 
-    if sys.version_info[0] <= 2:
-        def __div__(self, value):
-            return self.clone(float(self) / value)
+    def __truediv__(self, value):
+        return self.clone(float(self) / value)
 
-        def __rdiv__(self, value):
-            return self.clone(value / float(self))
-    else:
-        def __truediv__(self, value):
-            return self.clone(float(self) / value)
+    def __rtruediv__(self, value):
+        return self.clone(value / float(self))
 
-        def __rtruediv__(self, value):
-            return self.clone(value / float(self))
+    def __divmod__(self, value):
+        return self.clone(float(self) // value)
 
-        def __divmod__(self, value):
-            return self.clone(float(self) // value)
-
-        def __rdivmod__(self, value):
-            return self.clone(value // float(self))
+    def __rdivmod__(self, value):
+        return self.clone(value // float(self))
 
     def __int__(self):
         return int(float(self))
-
-    if sys.version_info[0] <= 2:
-        def __long__(self):
-            return long(float(self))
 
     def __float__(self):
         if self._value in self._inf:
@@ -1627,14 +1539,10 @@ class Real(base.SimpleAsn1Type):
     def __ge__(self, value):
         return float(self) >= value
 
-    if sys.version_info[0] <= 2:
-        def __nonzero__(self):
-            return bool(float(self))
-    else:
-        def __bool__(self):
-            return bool(float(self))
+    def __bool__(self):
+        return bool(float(self))
 
-        __hash__ = base.SimpleAsn1Type.__hash__
+    __hash__ = base.SimpleAsn1Type.__hash__
 
     def __getitem__(self, idx):
         if self._value in self._inf:
@@ -3120,12 +3028,8 @@ class Choice(Set):
             return self._componentValues[self._currentIdx] >= other
         return NotImplemented
 
-    if sys.version_info[0] <= 2:
-        def __nonzero__(self):
-            return self._componentValues and True or False
-    else:
-        def __bool__(self):
-            return self._componentValues and True or False
+    def __bool__(self):
+        return bool(self._componentValues)
 
     def __len__(self):
         return self._currentIdx is not None and 1 or 0

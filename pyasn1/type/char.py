@@ -54,88 +54,44 @@ class AbstractCharacterString(univ.OctetString):
         On constraint violation or bad initializer.
     """
 
-    if sys.version_info[0] <= 2:
-        def __str__(self):
-            try:
-                # `str` is Py2 text representation
-                return self._value.encode(self.encoding)
+    def __str__(self):
+        return str(self._value)
 
-            except UnicodeEncodeError:
-                exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeEncodeError(
-                    "Can't encode string '%s' with codec "
-                    "%s" % (self._value, self.encoding), exc
-                )
+    def __bytes__(self):
+        try:
+            return self._value.encode(self.encoding)
+        except UnicodeEncodeError:
+            exc = sys.exc_info()[1]
+            raise error.PyAsn1UnicodeEncodeError(
+                "Can't encode string '%s' with codec "
+                "%s" % (self._value, self.encoding), exc
+            )
 
-        def __unicode__(self):
-            return unicode(self._value)
+    def prettyIn(self, value):
+        try:
+            if isinstance(value, str):
+                return value
+            elif isinstance(value, bytes):
+                return value.decode(self.encoding)
+            elif isinstance(value, (tuple, list)):
+                return self.prettyIn(bytes(value))
+            elif isinstance(value, univ.OctetString):
+                return value.asOctets().decode(self.encoding)
+            else:
+                return str(value)
 
-        def prettyIn(self, value):
-            try:
-                if isinstance(value, unicode):
-                    return value
-                elif isinstance(value, str):
-                    return value.decode(self.encoding)
-                elif isinstance(value, (tuple, list)):
-                    return self.prettyIn(''.join([chr(x) for x in value]))
-                elif isinstance(value, univ.OctetString):
-                    return value.asOctets().decode(self.encoding)
-                else:
-                    return unicode(value)
+        except (UnicodeDecodeError, LookupError):
+            exc = sys.exc_info()[1]
+            raise error.PyAsn1UnicodeDecodeError(
+                "Can't decode string '%s' with codec "
+                "%s" % (value, self.encoding), exc
+            )
 
-            except (UnicodeDecodeError, LookupError):
-                exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeDecodeError(
-                    "Can't decode string '%s' with codec "
-                    "%s" % (value, self.encoding), exc
-                )
+    def asOctets(self, padding=True):
+        return bytes(self)
 
-        def asOctets(self, padding=True):
-            return str(self)
-
-        def asNumbers(self, padding=True):
-            return tuple([ord(x) for x in str(self)])
-
-    else:
-        def __str__(self):
-            # `unicode` is Py3 text representation
-            return str(self._value)
-
-        def __bytes__(self):
-            try:
-                return self._value.encode(self.encoding)
-            except UnicodeEncodeError:
-                exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeEncodeError(
-                    "Can't encode string '%s' with codec "
-                    "%s" % (self._value, self.encoding), exc
-                )
-
-        def prettyIn(self, value):
-            try:
-                if isinstance(value, str):
-                    return value
-                elif isinstance(value, bytes):
-                    return value.decode(self.encoding)
-                elif isinstance(value, (tuple, list)):
-                    return self.prettyIn(bytes(value))
-                elif isinstance(value, univ.OctetString):
-                    return value.asOctets().decode(self.encoding)
-                else:
-                    return str(value)
-
-            except (UnicodeDecodeError, LookupError):
-                exc = sys.exc_info()[1]
-                raise error.PyAsn1UnicodeDecodeError(
-                    "Can't decode string '%s' with codec "
-                    "%s" % (value, self.encoding), exc
-                )
-
-        def asOctets(self, padding=True):
-            return bytes(self)
-
-        def asNumbers(self, padding=True):
-            return tuple(bytes(self))
+    def asNumbers(self, padding=True):
+        return tuple(bytes(self))
 
     #
     # See OctetString.prettyPrint() for the explanation

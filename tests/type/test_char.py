@@ -50,16 +50,10 @@ class AbstractStringTestCase(object):
             assert False, 'Size constraint failed'
 
     def testSerialised(self):
-        if sys.version_info[0] < 3:
-            assert str(self.asn1String) == self.pythonString.encode(self.encoding), '__str__() fails'
-        else:
-            assert bytes(self.asn1String) == self.pythonString.encode(self.encoding), '__str__() fails'
+        assert bytes(self.asn1String) == self.pythonString.encode(self.encoding), '__str__() fails'
 
     def testPrintable(self):
-        if sys.version_info[0] < 3:
-            assert unicode(self.asn1String) == self.pythonString, '__str__() fails'
-        else:
-            assert str(self.asn1String) == self.pythonString, '__str__() fails'
+        assert str(self.asn1String) == self.pythonString, '__str__() fails'
 
     def testInit(self):
         assert self.asn1Type(self.pythonString) == self.pythonString
@@ -152,14 +146,10 @@ class BMPStringTestCase(AbstractStringTestCase, BaseTestCase):
     asn1Type = char.BMPString
 
 
-if sys.version_info[0] > 2:
-
-    # Somehow comparison of UTF-32 encoded strings does not work in Py2
-
-    class UniversalStringTestCase(AbstractStringTestCase, BaseTestCase):
-        initializer = (0, 0, 4, 48, 0, 0, 4, 68)
-        encoding = 'utf-32-be'
-        asn1Type = char.UniversalString
+class UniversalStringTestCase(AbstractStringTestCase, BaseTestCase):
+    initializer = (0, 0, 4, 48, 0, 0, 4, 68)
+    encoding = 'utf-32-be'
+    asn1Type = char.UniversalString
 
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
