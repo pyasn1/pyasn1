@@ -46,7 +46,9 @@ class AbstractConstraint(object):
         return '<%s>' % representation
 
     def __eq__(self, other):
-        return self is other or self._values == other
+        if self is other:
+            return True
+        return self._values == other
 
     def __ne__(self, other):
         return self._values != other
