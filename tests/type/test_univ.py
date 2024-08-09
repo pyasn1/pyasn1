@@ -199,25 +199,17 @@ class IntegerTestCase(BaseTestCase):
     def testDivInt(self):
         assert univ.Integer(4) / 2 == 2, '__div__() fails'
 
-    if sys.version_info[0] > 2:
-        def testDivFloat(self):
-            assert univ.Integer(3) / 2 == 1.5, '__div__() fails'
+    def testDivFloat(self):
+        assert univ.Integer(3) / 2 == 1.5, '__div__() fails'
 
-        def testRdivFloat(self):
-            assert 3 / univ.Integer(2) == 1.5, '__rdiv__() fails'
-    else:
-        def testDivFloat(self):
-            assert univ.Integer(3) / 2 == 1, '__div__() fails'
-
-        def testRdivFloat(self):
-            assert 3 / univ.Integer(2) == 1, '__rdiv__() fails'
+    def testRdivFloat(self):
+        assert 3 / univ.Integer(2) == 1.5, '__rdiv__() fails'
 
     def testRdivInt(self):
         assert 6 / univ.Integer(3) == 2, '__rdiv__() fails'
 
-    if sys.version_info[0] > 2:
-        def testTrueDiv(self):
-            assert univ.Integer(3) / univ.Integer(2) == 1.5, '__truediv__() fails'
+    def testTrueDiv(self):
+        assert univ.Integer(3) / univ.Integer(2) == 1.5, '__truediv__() fails'
 
     def testFloorDiv(self):
         assert univ.Integer(3) // univ.Integer(2) == 1, '__floordiv__() fails'
@@ -485,17 +477,10 @@ class OctetStringWithUnicodeMixIn(object):
             assert univ.OctetString(univ.Integer(123)) == univ.OctetString('123')
 
     def testSerialised(self):
-        if sys.version_info[0] < 3:
-            assert str(univ.OctetString(self.encodedPythonString, encoding=self.encoding)) == self.encodedPythonString, '__str__() fails'
-        else:
-            assert bytes(univ.OctetString(self.encodedPythonString, encoding=self.encoding)) == self.encodedPythonString, '__str__() fails'
+        assert bytes(univ.OctetString(self.encodedPythonString, encoding=self.encoding)) == self.encodedPythonString, '__str__() fails'
 
     def testPrintable(self):
-        if sys.version_info[0] < 3:
-            assert str(univ.OctetString(self.encodedPythonString, encoding=self.encoding)) == self.encodedPythonString, '__str__() fails'
-            assert unicode(univ.OctetString(self.pythonString, encoding=self.encoding)) == self.pythonString, 'unicode init fails'
-        else:
-            assert str(univ.OctetString(self.pythonString, encoding=self.encoding)) == self.pythonString, 'unicode init fails'
+        assert str(univ.OctetString(self.pythonString, encoding=self.encoding)) == self.pythonString, 'unicode init fails'
 
     def testSeq(self):
         assert univ.OctetString(self.encodedPythonString)[0] == self.encodedPythonString[0], '__getitem__() fails'
@@ -553,11 +538,7 @@ class OctetStringUnicodeErrorTestCase(BaseTestCase):
         octetString = univ.OctetString(serialized, encoding='us-ascii')
 
         try:
-            if sys.version_info < (3, 0):
-                unicode(octetString)
-
-            else:
-                str(octetString)
+            str(octetString)
 
         except PyAsn1UnicodeDecodeError:
             pass
@@ -573,13 +554,9 @@ class OctetStringWithUtf16TestCase(OctetStringWithUnicodeMixIn, BaseTestCase):
     encoding = 'utf-16-be'
 
 
-if sys.version_info[0] > 2:
-
-    # Somehow comparison of UTF-32 encoded strings does not work in Py2
-
-    class OctetStringWithUtf32TestCase(OctetStringWithUnicodeMixIn, BaseTestCase):
-        initializer = (0, 0, 4, 48, 0, 0, 4, 49, 0, 0, 4, 50)
-        encoding = 'utf-32-be'
+class OctetStringWithUtf32TestCase(OctetStringWithUnicodeMixIn, BaseTestCase):
+    initializer = (0, 0, 4, 48, 0, 0, 4, 49, 0, 0, 4, 50)
+    encoding = 'utf-32-be'
 
 
 class OctetStringTestCase(BaseTestCase):
@@ -903,8 +880,6 @@ class ObjectIdentifier(BaseTestCase):
 
     def testUnicode(self):
         s = '1.3.6'
-        if sys.version_info[0] < 3:
-            s = s.decode()
         assert univ.ObjectIdentifier(s) == (1, 3, 6), 'unicode init fails'
 
     def testTag(self):
@@ -980,8 +955,6 @@ class RelativeOID(BaseTestCase):
 
     def testUnicode(self):
         s = '1.3.6'
-        if sys.version_info[0] < 3:
-            s = s.decode()
         assert univ.RelativeOID(s) == (1, 3, 6), 'unicode init fails'
 
     def testTag(self):
