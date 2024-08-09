@@ -101,10 +101,9 @@ class AbstractItemEncoder(object):
                         value, asn1Spec, encodeFun, **options
                     )
 
-                except error.PyAsn1Error:
-                    exc = sys.exc_info()
+                except error.PyAsn1Error as exc:
                     raise error.PyAsn1Error(
-                        'Error encoding %r: %s' % (value, exc[1]))
+                        'Error encoding %r: %s' % (value, exc))
 
                 if LOG:
                     LOG('encoded %svalue %s into %s' % (

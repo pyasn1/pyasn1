@@ -140,7 +140,7 @@ class Asn1Type(Asn1Item):
         return True
 
     def prettyPrint(self, scope=0):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # backward compatibility
 
@@ -267,9 +267,8 @@ class SimpleAsn1Type(Asn1Type):
             try:
                 self.subtypeSpec(value)
 
-            except error.PyAsn1Error:
-                exType, exValue, exTb = sys.exc_info()
-                raise exType('%s at %s' % (exValue, self.__class__.__name__))
+            except error.PyAsn1Error as exValue:
+                raise type(exValue)('%s at %s' % (exValue, self.__class__.__name__))
 
         self._value = value
 
