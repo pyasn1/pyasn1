@@ -148,9 +148,6 @@ class SingleValueConstraint(AbstractConstraint):
     def __iter__(self):
         return iter(self._set)
 
-    def __sub__(self, constraint):
-        return self.__class__(*(self._set.difference(constraint)))
-
     def __add__(self, constraint):
         return self.__class__(*(self._set.union(constraint)))
 
