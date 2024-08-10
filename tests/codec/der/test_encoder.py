@@ -9,6 +9,7 @@ import unittest
 
 from tests.base import BaseTestCase
 
+from pyasn1.error import PyAsn1Error
 from pyasn1.type import tag
 from pyasn1.type import namedtype
 from pyasn1.type import opentype

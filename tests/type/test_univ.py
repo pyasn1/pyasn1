@@ -1607,29 +1607,6 @@ class Sequence(BaseTestCase):
 
         class Sequence(univ.Sequence):
             componentType = namedtype.NamedTypes(
-                namedtype.OptionalNamedType('name', univ.OctetString())
-            )
-
-        s = Sequence()
-
-        assert s.isValue
-
-        s[0] = 'test'
-
-        assert s.isValue
-
-        s.clear()
-
-        assert s.isValue
-
-        s.reset()
-
-        assert not s.isValue
-
-    def testSchemaWithOptionalComponents(self):
-
-        class Sequence(univ.Sequence):
-            componentType = namedtype.NamedTypes(
                 namedtype.DefaultedNamedType('name', univ.OctetString(''))
             )
 

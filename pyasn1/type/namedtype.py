@@ -13,13 +13,6 @@ from pyasn1.type import tagmap
 __all__ = ['NamedType', 'OptionalNamedType', 'DefaultedNamedType',
            'NamedTypes']
 
-try:
-    any
-
-except NameError:
-    any = lambda x: bool(filter(bool, x))
-
-
 class NamedType(object):
     """Create named field object for a constructed ASN.1 type.
 
