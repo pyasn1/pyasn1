@@ -170,7 +170,8 @@ class SetEncoder(encoder.SequenceEncoder):
             # instance of ASN.1 schema
             inconsistency = value.isInconsistent
             if inconsistency:
-                raise inconsistency
+                raise error.PyAsn1Error(
+                    f"ASN.1 object {value.__class__.__name__} is inconsistent")
 
             namedTypes = value.componentType
 

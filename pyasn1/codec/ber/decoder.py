@@ -874,7 +874,8 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
             else:
                 inconsistency = asn1Object.isInconsistent
                 if inconsistency:
-                    raise inconsistency
+                    raise error.PyAsn1Error(
+                        f"ASN.1 object {asn1Object.__class__.__name__} is inconsistent")
 
         else:
             componentType = asn1Spec.componentType
@@ -1099,7 +1100,8 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
                 else:
                     inconsistency = asn1Object.isInconsistent
                     if inconsistency:
-                        raise inconsistency
+                        raise error.PyAsn1Error(
+                            f"ASN.1 object {asn1Object.__class__.__name__} is inconsistent")
 
         else:
             componentType = asn1Spec.componentType
