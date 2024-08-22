@@ -76,7 +76,8 @@ class SetEncoder(AbstractItemEncoder):
     def encode(self, value, encodeFun, **options):
         inconsistency = value.isInconsistent
         if inconsistency:
-            raise inconsistency
+            raise error.PyAsn1Error(
+                f"ASN.1 object {value.__class__.__name__} is inconsistent")
 
         namedTypes = value.componentType
         substrate = self.protoDict()
@@ -96,7 +97,8 @@ class SequenceOfEncoder(AbstractItemEncoder):
     def encode(self, value, encodeFun, **options):
         inconsistency = value.isInconsistent
         if inconsistency:
-            raise inconsistency
+            raise error.PyAsn1Error(
+                f"ASN.1 object {value.__class__.__name__} is inconsistent")
         return [encodeFun(x, **options) for x in value]
 
 
