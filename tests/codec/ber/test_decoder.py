@@ -1746,9 +1746,7 @@ class ErrorOnDecodingTestCase(BaseTestCase):
             asn1Object = next(decode(stream))
 
         except error.PyAsn1Error:
-            exc = sys.exc_info()[1]
-            assert isinstance(exc, error.PyAsn1Error), (
-                'Unexpected exception raised %r' % (exc,))
+            pass
 
         else:
             assert False, 'Unexpected decoder result %r' % (asn1Object,)

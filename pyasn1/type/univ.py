@@ -241,9 +241,9 @@ class Integer(base.SimpleAsn1Type):
             try:
                 return self.namedValues[value]
 
-            except KeyError:
+            except KeyError as exc:
                 raise error.PyAsn1Error(
-                    'Can\'t coerce %r into integer: %s' % (value, sys.exc_info()[1])
+                    'Can\'t coerce %r into integer: %s' % (value, exc)
                 )
 
     def prettyOut(self, value):
@@ -572,8 +572,8 @@ class BitString(base.SimpleAsn1Type):
         try:
             value = SizedInteger(value, 16).setBitLength(len(value) * 4)
 
-        except ValueError:
-            raise error.PyAsn1Error('%s.fromHexString() error: %s' % (cls.__name__, sys.exc_info()[1]))
+        except ValueError as exc:
+            raise error.PyAsn1Error('%s.fromHexString() error: %s' % (cls.__name__, exc))
 
         if prepend is not None:
             value = SizedInteger(
@@ -597,8 +597,8 @@ class BitString(base.SimpleAsn1Type):
         try:
             value = SizedInteger(value or '0', 2).setBitLength(len(value))
 
-        except ValueError:
-            raise error.PyAsn1Error('%s.fromBinaryString() error: %s' % (cls.__name__, sys.exc_info()[1]))
+        except ValueError as exc:
+            raise error.PyAsn1Error('%s.fromBinaryString() error: %s' % (cls.__name__, exc))
 
         if prepend is not None:
             value = SizedInteger(
@@ -801,8 +801,7 @@ class OctetString(base.SimpleAsn1Type):
             try:
                 return value.encode(self.encoding)
 
-            except UnicodeEncodeError:
-                exc = sys.exc_info()[1]
+            except UnicodeEncodeError as exc:
                 raise error.PyAsn1UnicodeEncodeError(
                     "Can't encode string '%s' with '%s' "
                     "codec" % (value, self.encoding), exc
@@ -823,8 +822,7 @@ class OctetString(base.SimpleAsn1Type):
         try:
             return self._value.decode(self.encoding)
 
-        except UnicodeDecodeError:
-            exc = sys.exc_info()[1]
+        except UnicodeDecodeError as exc:
             raise error.PyAsn1UnicodeDecodeError(
                 "Can't decode string '%s' with '%s' codec at "
                 "'%s'" % (self._value, self.encoding,
@@ -1134,21 +1132,22 @@ class ObjectIdentifier(base.SimpleAsn1Type):
         elif isinstance(value, str):
             if '-' in value:
                 raise error.PyAsn1Error(
+                    # sys.exc_info in case prettyIn was called while handling an exception
                     'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
                 )
             try:
                 return tuple([int(subOid) for subOid in value.split('.') if subOid])
-            except ValueError:
+            except ValueError as exc:
                 raise error.PyAsn1Error(
-                    'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
+                    'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, exc)
                 )
 
         try:
             tupleOfInts = tuple([int(subOid) for subOid in value if subOid >= 0])
 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as exc:
             raise error.PyAsn1Error(
-                'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
+                'Malformed Object ID %s at %s: %s' % (value, self.__class__.__name__, exc)
             )
 
         if len(tupleOfInts) == len(value):
@@ -1262,21 +1261,22 @@ class RelativeOID(base.SimpleAsn1Type):
         elif isinstance(value, str):
             if '-' in value:
                 raise error.PyAsn1Error(
+                    # sys.exc_info in case prettyIn was called while handling an exception
                     'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
                 )
             try:
                 return tuple([int(subOid) for subOid in value.split('.') if subOid])
-            except ValueError:
+            except ValueError as exc:
                 raise error.PyAsn1Error(
-                    'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
+                    'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, exc)
                 )
 
         try:
             tupleOfInts = tuple([int(subOid) for subOid in value if subOid >= 0])
 
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as exc:
             raise error.PyAsn1Error(
-                'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, sys.exc_info()[1])
+                'Malformed RELATIVE-OID %s at %s: %s' % (value, self.__class__.__name__, exc)
             )
 
         if len(tupleOfInts) == len(value):
@@ -1686,15 +1686,15 @@ class SequenceOfAndSetOfBase(base.ConstructedAsn1Type):
         try:
             return self.getComponentByPosition(idx)
 
-        except error.PyAsn1Error:
-            raise IndexError(sys.exc_info()[1])
+        except error.PyAsn1Error as exc:
+            raise IndexError(exc)
 
     def __setitem__(self, idx, value):
         try:
             self.setComponentByPosition(idx, value)
 
-        except error.PyAsn1Error:
-            raise IndexError(sys.exc_info()[1])
+        except error.PyAsn1Error as exc:
+            raise IndexError(exc)
 
     def append(self, value):
         if self._componentValues is noValue:
@@ -1727,8 +1727,8 @@ class SequenceOfAndSetOfBase(base.ConstructedAsn1Type):
         try:
             return indices[values.index(value, start, stop)]
 
-        except error.PyAsn1Error:
-            raise ValueError(sys.exc_info()[1])
+        except error.PyAsn1Error as exc:
+            raise ValueError(exc)
 
     def reverse(self):
         self._componentValues.reverse()
@@ -2085,8 +2085,7 @@ class SequenceOfAndSetOfBase(base.ConstructedAsn1Type):
             # Represent SequenceOf/SetOf as a bare dict to constraints chain
             self.subtypeSpec(mapping)
 
-        except error.PyAsn1Error:
-            exc = sys.exc_info()[1]
+        except error.PyAsn1Error as exc:
             return exc
 
         return False
@@ -2241,34 +2240,34 @@ class SequenceAndSetBase(base.ConstructedAsn1Type):
             try:
                 return self.getComponentByName(idx)
 
-            except error.PyAsn1Error:
+            except error.PyAsn1Error as exc:
                 # duck-typing dict
-                raise KeyError(sys.exc_info()[1])
+                raise KeyError(exc)
 
         else:
             try:
                 return self.getComponentByPosition(idx)
 
-            except error.PyAsn1Error:
+            except error.PyAsn1Error as exc:
                 # duck-typing list
-                raise IndexError(sys.exc_info()[1])
+                raise IndexError(exc)
 
     def __setitem__(self, idx, value):
         if isinstance(idx, str):
             try:
                 self.setComponentByName(idx, value)
 
-            except error.PyAsn1Error:
+            except error.PyAsn1Error as exc:
                 # duck-typing dict
-                raise KeyError(sys.exc_info()[1])
+                raise KeyError(exc)
 
         else:
             try:
                 self.setComponentByPosition(idx, value)
 
-            except error.PyAsn1Error:
+            except error.PyAsn1Error as exc:
                 # duck-typing list
-                raise IndexError(sys.exc_info()[1])
+                raise IndexError(exc)
 
     def __contains__(self, key):
         if self._componentTypeLen:
@@ -2717,8 +2716,7 @@ class SequenceAndSetBase(base.ConstructedAsn1Type):
             # Represent Sequence/Set as a bare dict to constraints chain
             self.subtypeSpec(mapping)
 
-        except error.PyAsn1Error:
-            exc = sys.exc_info()[1]
+        except error.PyAsn1Error as exc:
             return exc
 
         return False
