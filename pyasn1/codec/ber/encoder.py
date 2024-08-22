@@ -5,6 +5,7 @@
 # License: https://pyasn1.readthedocs.io/en/latest/license.html
 #
 import sys
+import warnings
 
 from pyasn1 import debug
 from pyasn1 import error
@@ -809,10 +810,6 @@ TYPE_MAP = {
     useful.UTCTime.typeId: OctetStringEncoder()
 }
 
-# deprecated aliases, https://github.com/pyasn1/pyasn1/issues/9
-tagMap = TAG_MAP
-typeMap = TYPE_MAP
-
 
 class SingleItemEncoder(object):
     fixedDefLengthMode = None
@@ -950,3 +947,9 @@ class Encoder(object):
 #:    b'0\t\x02\x01\x01\x02\x01\x02\x02\x01\x03'
 #:
 encode = Encoder()
+
+def __getattr__(attr: str):
+    if newAttr := {"tagMap": "TAG_MAP", "typeMap": "TYPE_MAP"}.get(attr):
+        warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+        return globals()[newAttr]
+    raise AttributeError(attr)
