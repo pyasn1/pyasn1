@@ -7,7 +7,7 @@
 import io
 import os
 import sys
-
+import warnings
 
 from pyasn1 import debug
 from pyasn1 import error
@@ -1501,10 +1501,6 @@ TYPE_MAP = {
     univ.Any.typeId: AnyPayloadDecoder()
 }
 
-# deprecated aliases, https://github.com/pyasn1/pyasn1/issues/9
-tagMap = TAG_MAP
-typeMap = TYPE_MAP
-
 # Put in non-ambiguous types for faster codec lookup
 for typeDecoder in TAG_MAP.values():
     if typeDecoder.protoComponent is not None:
@@ -2185,3 +2181,9 @@ class Decoder(object):
 #:     1 2 3
 #:
 decode = Decoder()
+
+def __getattr__(attr: str):
+    if newAttr := {"tagMap": "TAG_MAP", "typeMap": "TYPE_MAP"}.get(attr):
+        warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+        return globals()[newAttr]
+    raise AttributeError(attr)
