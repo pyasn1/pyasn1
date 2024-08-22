@@ -623,10 +623,10 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
     protoSequenceComponent = None
 
     def _getComponentTagMap(self, asn1Object, idx):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _getComponentPositionByType(self, asn1Object, tagSet, idx):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _decodeComponentsSchemaless(
             self, substrate, tagSet=None, decodeFun=None,
@@ -2091,9 +2091,8 @@ class Decoder(object):
                 """
                 try:
                     substrate_gen = origSubstrateFun(asn1Object, substrate, length, options)
-                except TypeError:
-                    _type, _value, traceback = sys.exc_info()
-                    if traceback.tb_next:
+                except TypeError as _value:
+                    if _value.__traceback__.tb_next:
                         # Traceback depth > 1 means TypeError from inside user provided function
                         raise
                     # invariant maintained at Decoder.__call__ entry
