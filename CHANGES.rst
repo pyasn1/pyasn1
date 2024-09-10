@@ -1,3 +1,24 @@
+Revision 0.6.1, released 10-09-2024
+---------------------------------------
+
+- Added support for Python 3.13 and updated GitHub Actions
+  [pr #73](https://github.com/pyasn1/pyasn1/pull/73/)
+- Removed Python 2 support and related code
+  [pr #62](https://github.com/pyasn1/pyasn1/pull/62/)
+  [pr #61](https://github.com/pyasn1/pyasn1/pull/61/)
+  [pr #60](https://github.com/pyasn1/pyasn1/pull/60/)
+- Improved error handling and consistency
+  [pr #71](https://github.com/pyasn1/pyasn1/pull/71/)
+  [pr #70](https://github.com/pyasn1/pyasn1/pull/70/)
+- Runtime deprecation of `tagMap` and `typeMap` aliases
+  [pr #72](https://github.com/pyasn1/pyasn1/pull/72/)
+- Fixed duplicated and missing declarations
+  [pr #64](https://github.com/pyasn1/pyasn1/pull/64/)
+- Cleaned documentation and comments
+  [pr #63](https://github.com/pyasn1/pyasn1/pull/63/)
+- Removed bdist_wheel universal flag from setup.cfg
+  [pr #69](https://github.com/pyasn1/pyasn1/pull/69/)
+
 Revision 0.6.0, released 26-03-2024
 ---------------------------------------
 
