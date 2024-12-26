@@ -83,7 +83,8 @@ def asSeekableStream(substrate):
 
     Parameters
     ----------
-    substrate: :py:class:`bytes` or :py:class:`io.IOBase` or :py:class:`univ.OctetString`
+    substrate: :py:class:`bytes` or :py:class:`bytearray` or :py:class:`memoryview`
+        or :py:class:`io.IOBase` or :py:class:`univ.OctetString`
 
     Returns
     -------
@@ -97,7 +98,7 @@ def asSeekableStream(substrate):
     if isinstance(substrate, io.BytesIO):
         return substrate
 
-    elif isinstance(substrate, bytes):
+    elif isinstance(substrate, (bytes, bytearray, memoryview)):
         return io.BytesIO(substrate)
 
     elif isinstance(substrate, univ.OctetString):
