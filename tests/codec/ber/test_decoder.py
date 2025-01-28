@@ -1829,6 +1829,20 @@ class BytesIOTestCase(BaseTestCase):
         assert values == [12, (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1)]
 
 
+class BytearrayTestCase(BaseTestCase):
+    def testRead(self):
+        source = memoryview(bytes((2, 1, 12, 35, 128, 3, 2, 0, 169, 3, 2, 1, 138, 0, 0)))
+        values = list(decoder.StreamingDecoder(source))
+        assert values == [12, (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1)]
+
+
+class MemoryviewTestCase(BaseTestCase):
+    def testRead(self):
+        source = bytearray((2, 1, 12, 35, 128, 3, 2, 0, 169, 3, 2, 1, 138, 0, 0))
+        values = list(decoder.StreamingDecoder(source))
+        assert values == [12, (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1)]
+
+
 class UnicodeTestCase(BaseTestCase):
     def testFail(self):
         # This ensures that str objects cannot be parsed.
