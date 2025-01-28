@@ -6,13 +6,9 @@
 #
 import io
 import os
-import sys
 
 from pyasn1 import error
 from pyasn1.type import univ
-
-_PY2 = sys.version_info < (3,)
-
 
 class CachingStreamWrapper(io.IOBase):
     """Wrapper around non-seekable streams.
@@ -87,7 +83,8 @@ def asSeekableStream(substrate):
 
     Parameters
     ----------
-    substrate: :py:class:`bytes` or :py:class:`io.IOBase` or :py:class:`univ.OctetString`
+    substrate: :py:class:`bytes` or :py:class:`bytearray` or :py:class:`memoryview`
+        or :py:class:`io.IOBase` or :py:class:`univ.OctetString`
 
     Returns
     -------
@@ -101,21 +98,15 @@ def asSeekableStream(substrate):
     if isinstance(substrate, io.BytesIO):
         return substrate
 
-    elif isinstance(substrate, bytes):
+    elif isinstance(substrate, (bytes, bytearray, memoryview)):
         return io.BytesIO(substrate)
 
     elif isinstance(substrate, univ.OctetString):
         return io.BytesIO(substrate.asOctets())
 
     try:
-        # Special case: impossible to set attributes on `file` built-in
-        # XXX: broken, BufferedReader expects a "readable" attribute.
-        if _PY2 and isinstance(substrate, file):
-            return io.BufferedReader(substrate)
-
-        elif substrate.seekable():  # Will fail for most invalid types
+        if substrate.seekable():  # Will fail for most invalid types
             return substrate
-
         else:
             return CachingStreamWrapper(substrate)
 
