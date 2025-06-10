@@ -126,7 +126,7 @@ html_theme_options = {
     'logo': 'logo.svg',
     'description': '<p align=left><i><b>Brewing free software for the greater good</i></b></p>',
     'show_powered_by': False,
-    'github_user': 'etingof',
+    'github_user': 'pyasn1',
     'github_repo': 'pyasn1',
     'fixed_sidebar': True,
 }
