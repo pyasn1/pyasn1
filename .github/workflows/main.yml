@@ -52,7 +52,7 @@ jobs:
           allow-prereleases: true
           cache: "pip"
       - name: "Update pip"
-        run: python -m pip install --upgrade pip setuptools wheel
+        run: python -m pip install --upgrade pip
       - name: "Install tox dependencies"
         run: python -m pip install --upgrade tox tox-gh-actions
       - name: "Run tox for ${{ matrix.python-version }}"
@@ -71,7 +71,7 @@ jobs:
           python-version: "3.x"
           cache: "pip"
       - name: "Update pip"
-        run: python -m pip install --upgrade pip setuptools wheel
+        run: python -m pip install --upgrade pip
       - name: "Install 'build'"
         run: python -m pip install --upgrade build
       - name: "Run 'build'"
