@@ -692,6 +692,18 @@ class BitString(base.SimpleAsn1Type):
                 'Bad BitString initializer type \'%s\'' % (value,)
             )
 
+    def prettyOut(self, value):
+        bit_string = bin(value)[2:]
+        bit_string = '0' * (len(value) - len(bit_string)) + bit_string
+        if self.namedValues:
+            names = []
+            for i, bit in enumerate(bit_string):
+                if bit == '1':
+                    names.append(self.namedValues.getName(i) or f'<bit {i} unnamed>')
+            return bit_string + ' (' + ', '.join(names) + ')'
+        else:
+            return bit_string
+
 
 class OctetString(base.SimpleAsn1Type):
     """Create |ASN.1| schema or value object.
