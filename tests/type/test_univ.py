@@ -369,7 +369,12 @@ class BitStringTestCase(BaseTestCase):
         BaseTestCase.setUp(self)
 
         self.b = univ.BitString(
-            namedValues=namedval.NamedValues(('Active', 0), ('Urgent', 1))
+            namedValues=namedval.NamedValues(
+                ('Active', 0),
+                ('Urgent', 1),
+                ('Flagged', 2),
+                ('Blocked', 3),
+            )
         )
 
     def testBinDefault(self):
@@ -396,6 +401,9 @@ class BitStringTestCase(BaseTestCase):
         assert self.b.clone(hexValue='A98A') == (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0)
         assert self.b.clone('1010100110001010') == (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0)
         assert self.b.clone((1, 0, 1)) == (1, 0, 1)
+        assert self.b.clone('Blocked') == (0, 0, 0, 1)
+        assert self.b.clone('Active, Blocked') == (1, 0, 0, 1)
+        assert self.b.clone(('Active', 'Blocked')) == (1, 0, 0, 1)
 
     def testStr(self):
         assert str(self.b.clone('Urgent')) == '01'
