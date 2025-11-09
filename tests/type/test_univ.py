@@ -459,7 +459,7 @@ class BitStringPicklingTestCase(unittest.TestCase):
         assert new_asn1 == (1, 0, 1, 0)
 
 
-class OctetStringWithUnicodeMixIn(object):
+class OctetStringWithUnicodeMixIn:
 
     initializer = ()
     encoding = 'us-ascii'

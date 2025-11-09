@@ -22,7 +22,7 @@ __all__ = ['Encoder', 'encode']
 LOG = debug.registerLoggee(__name__, flags=debug.DEBUG_ENCODER)
 
 
-class AbstractItemEncoder(object):
+class AbstractItemEncoder:
     supportIndefLenMode = True
 
     # An outcome of otherwise legit call `encodeFun(eoo.endOfOctets)`
@@ -810,7 +810,7 @@ TYPE_MAP = {
 }
 
 
-class SingleItemEncoder(object):
+class SingleItemEncoder:
     fixedDefLengthMode = None
     fixedChunkSize = None
 
@@ -881,7 +881,7 @@ class SingleItemEncoder(object):
         return substrate
 
 
-class Encoder(object):
+class Encoder:
     SINGLE_ITEM_ENCODER = SingleItemEncoder
 
     def __init__(self, tagMap=_MISSING, typeMap=_MISSING, **options):
