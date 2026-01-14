@@ -462,6 +462,11 @@ class BitStringTestCase(BaseTestCase):
 
         assert BitString('11000000011001').asInteger() == 12313
 
+    def testUnrecognizedNamedValue(self):
+        with self.assertRaises(PyAsn1Error) as cm:
+            self.b.clone('Xyzzy')
+        self.assertEqual(str(cm.exception), 'Unrecognized named value: Xyzzy')
+
 
 class BitStringPicklingTestCase(unittest.TestCase):
 

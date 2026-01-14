@@ -667,7 +667,10 @@ class BitString(base.SimpleAsn1Type):
 
         elif isinstance(value, (tuple, list)):
             if self.namedValues and all(isinstance(v, str) for v in value):
-                bits = [self.namedValues[name] for name in value]
+                try:
+                    bits = [self.namedValues[name] for name in value]
+                except KeyError as e:
+                    raise error.PyAsn1Error('Unrecognized named value: %s' % (e.args[0],)) from e
                 value = [False] * (max(bits) + 1)
                 for i in bits:
                     value[i] = True
