@@ -47,8 +47,8 @@ class BitStringDecoderTestCase(BaseTestCase):
 class OctetStringDecoderTestCase(BaseTestCase):
     def testShortMode(self):
         assert decoder.decode(
-            '\004\017Quick brown fox'.encode()
-        ) == ('Quick brown fox'.encode(), ''.encode())
+            b'\004\017Quick brown fox'
+        ) == (b'Quick brown fox', b'')
 
     def testIndefMode(self):
         try:

@@ -21,7 +21,7 @@ __all__ = ['encode']
 LOG = debug.registerLoggee(__name__, flags=debug.DEBUG_ENCODER)
 
 
-class AbstractItemEncoder(object):
+class AbstractItemEncoder:
     def encode(self, value, encodeFun, **options):
         raise error.PyAsn1Error('Not implemented')
 
@@ -181,7 +181,7 @@ TYPE_MAP = {
 }
 
 
-class SingleItemEncoder(object):
+class SingleItemEncoder:
 
     TAG_MAP = TAG_MAP
     TYPE_MAP = TYPE_MAP
@@ -230,7 +230,7 @@ class SingleItemEncoder(object):
         return pyObject
 
 
-class Encoder(object):
+class Encoder:
     SINGLE_ITEM_ENCODER = SingleItemEncoder
 
     def __init__(self, **options):

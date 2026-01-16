@@ -20,7 +20,7 @@ __all__ = ['decode']
 LOG = debug.registerLoggee(__name__, flags=debug.DEBUG_DECODER)
 
 
-class AbstractScalarPayloadDecoder(object):
+class AbstractScalarPayloadDecoder:
     def __call__(self, pyObject, asn1Spec, decodeFun=None, **options):
         return asn1Spec.clone(pyObject)
 
@@ -30,7 +30,7 @@ class BitStringPayloadDecoder(AbstractScalarPayloadDecoder):
         return asn1Spec.clone(univ.BitString.fromBinaryString(pyObject))
 
 
-class SequenceOrSetPayloadDecoder(object):
+class SequenceOrSetPayloadDecoder:
     def __call__(self, pyObject, asn1Spec, decodeFun=None, **options):
         asn1Value = asn1Spec.clone()
 
@@ -43,7 +43,7 @@ class SequenceOrSetPayloadDecoder(object):
         return asn1Value
 
 
-class SequenceOfOrSetOfPayloadDecoder(object):
+class SequenceOfOrSetOfPayloadDecoder:
     def __call__(self, pyObject, asn1Spec, decodeFun=None, **options):
         asn1Value = asn1Spec.clone()
 
@@ -53,7 +53,7 @@ class SequenceOfOrSetOfPayloadDecoder(object):
         return asn1Value
 
 
-class ChoicePayloadDecoder(object):
+class ChoicePayloadDecoder:
     def __call__(self, pyObject, asn1Spec, decodeFun=None, **options):
         asn1Value = asn1Spec.clone()
 
@@ -135,7 +135,7 @@ TYPE_MAP = {
 }
 
 
-class SingleItemDecoder(object):
+class SingleItemDecoder:
 
     TAG_MAP = TAG_MAP
     TYPE_MAP = TYPE_MAP
@@ -185,7 +185,7 @@ class SingleItemDecoder(object):
         return value
 
 
-class Decoder(object):
+class Decoder:
     SINGLE_ITEM_DECODER = SingleItemDecoder
 
     def __init__(self, **options):
