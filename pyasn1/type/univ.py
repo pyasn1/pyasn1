@@ -6,6 +6,7 @@
 #
 import math
 import sys
+import warnings
 
 from pyasn1 import error
 from pyasn1.codec.ber import eoo
@@ -399,8 +400,11 @@ class BitString(base.SimpleAsn1Type):
             )
 
         group1 = Rights(('group-read', 'group-write'))
+        assert group1 == (0, 0, 1, 1)
         group2 = Rights('0011')
+        assert group2 == (0, 0, 1, 1)
         group3 = Rights(0x3)
+        assert group3 == (1, 1)
     """
     #: Set (on class, not on instance) or return a
     #: :py:class:`~pyasn1.type.tag.TagSet` object representing ASN.1 tag(s)
@@ -650,21 +654,7 @@ class BitString(base.SimpleAsn1Type):
 
             elif self.namedValues and not value.isdigit():  # named bits like 'Urgent, Active'
                 names = [x.strip() for x in value.split(',')]
-
-                try:
-
-                    bitPositions = [self.namedValues[name] for name in names]
-
-                except KeyError:
-                    raise error.PyAsn1Error('unknown bit name(s) in %r' % (names,))
-
-                rightmostPosition = max(bitPositions)
-
-                number = 0
-                for bitPosition in bitPositions:
-                    number |= 1 << (rightmostPosition - bitPosition)
-
-                return SizedInteger(number).setBitLength(rightmostPosition + 1)
+                return self.prettyIn(names)
 
             elif value.startswith('0x'):
                 return self.fromHexString(value[2:], internalFormat=True)
@@ -676,6 +666,22 @@ class BitString(base.SimpleAsn1Type):
                 return self.fromBinaryString(value, internalFormat=True)
 
         elif isinstance(value, (tuple, list)):
+            if self.namedValues and all(isinstance(v, str) for v in value):
+                try:
+                    bits = [self.namedValues[name] for name in value]
+                except KeyError as e:
+                    raise error.PyAsn1Error('Unrecognized named value: %s' % (e.args[0],)) from e
+                value = [False] * (max(bits) + 1)
+                for i in bits:
+                    value[i] = True
+
+            if not all(v in (1, 0) for v in value):
+                type_names = set(type(v).__name__ for v in value)
+                warnings.warn(
+                    'BitString initializer expects a list of bits or named values. '
+                    f'Received a list with: {type_names}. Results may not be what you expect.'
+                )
+
             return self.fromBinaryString(''.join([b and '1' or '0' for b in value]), internalFormat=True)
 
         elif isinstance(value, BitString):
@@ -688,6 +694,18 @@ class BitString(base.SimpleAsn1Type):
             raise error.PyAsn1Error(
                 'Bad BitString initializer type \'%s\'' % (value,)
             )
+
+    def prettyOut(self, value):
+        bit_string = bin(value)[2:]
+        bit_string = '0' * (len(value) - len(bit_string)) + bit_string
+        if self.namedValues:
+            names = []
+            for i, bit in enumerate(bit_string):
+                if bit == '1':
+                    names.append(self.namedValues.getName(i) or f'<bit {i} unnamed>')
+            return bit_string + ' (' + ', '.join(names) + ')'
+        else:
+            return bit_string
 
 
 class OctetString(base.SimpleAsn1Type):
