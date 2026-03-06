@@ -1,3 +1,17 @@
+Revision 0.6.2, released 16-01-2026
+---------------------------------------
+
+- CVE-2026-23490 (GHSA-63vm-454h-vhhq): Fixed continuation octet limits
+  in OID/RELATIVE-OID decoder (thanks to tsigouris007)
+- Added support for Python 3.14
+  [pr #97](https://github.com/pyasn1/pyasn1/pull/97)
+- Added SECURITY.md policy
+- Fixed unit tests failing due to missing code
+  [issue #91](https://github.com/pyasn1/pyasn1/issues/91)
+  [pr #92](https://github.com/pyasn1/pyasn1/pull/92)
+- Migrated to pyproject.toml packaging
+  [pr #90](https://github.com/pyasn1/pyasn1/pull/90)
+
 Revision 0.6.1, released 10-09-2024
 ---------------------------------------
 

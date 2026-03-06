@@ -449,6 +449,72 @@ class ObjectIdentifierDecoderTestCase(BaseTestCase):
             bytes((0x06, 0x13, 0x88, 0x37, 0x83, 0xC6, 0xDF, 0xD4, 0xCC, 0xB3, 0xFF, 0xFF, 0xFE, 0xF0, 0xB8, 0xD6, 0xB8, 0xCB, 0xE2, 0xB6, 0x47))
         ) == ((2, 999, 18446744073709551535184467440737095), b'')
 
+    def testExcessiveContinuationOctets(self):
+        """Test that OID arcs with excessive continuation octets are rejected."""
+        # Create a payload with 25 continuation octets (exceeds 20 limit)
+        # 0x81 bytes are continuation octets, 0x01 terminates
+        malicious_payload = bytes([0x06, 26]) + bytes([0x81] * 25) + bytes([0x01])
+        try:
+            decoder.decode(malicious_payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive continuation octets tolerated'
+
+    def testMaxAllowedContinuationOctets(self):
+        """Test that OID arcs at the maximum continuation octets limit work."""
+        # Create a payload with exactly 20 continuation octets (at limit)
+        # This should succeed
+        payload = bytes([0x06, 21]) + bytes([0x81] * 20) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            assert 0, 'Valid OID with 20 continuation octets rejected'
+
+    def testOneOverContinuationLimit(self):
+        """Test boundary: 21 continuation octets (one over limit) is rejected."""
+        payload = bytes([0x06, 22]) + bytes([0x81] * 21) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, '21 continuation octets tolerated (should be rejected)'
+
+    def testExcessiveContinuationInSecondArc(self):
+        """Test that limit applies to subsequent arcs, not just the first."""
+        # First arc: valid simple byte (0x55 = 85, decodes to arc 2.5)
+        # Second arc: excessive continuation octets
+        payload = bytes([0x06, 27]) + bytes([0x55]) + bytes([0x81] * 25) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive continuation in second arc tolerated'
+
+    def testMultipleArcsAtLimit(self):
+        """Test multiple arcs each at the continuation limit work correctly."""
+        # Two arcs, each with 20 continuation octets (both at limit)
+        arc1 = bytes([0x81] * 20) + bytes([0x01])  # 21 bytes
+        arc2 = bytes([0x81] * 20) + bytes([0x01])  # 21 bytes
+        payload = bytes([0x06, 42]) + arc1 + arc2
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            assert 0, 'Multiple valid arcs at limit rejected'
+
+    def testExcessiveContinuationWithMaxBytes(self):
+        """Test with 0xFF continuation bytes (maximum value, not just 0x81)."""
+        # 0xFF bytes are also continuation octets (high bit set)
+        malicious_payload = bytes([0x06, 26]) + bytes([0xFF] * 25) + bytes([0x01])
+        try:
+            decoder.decode(malicious_payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive 0xFF continuation octets tolerated'
+
 
 class RelativeOIDDecoderTestCase(BaseTestCase):
     def testOne(self):
@@ -517,6 +583,70 @@ class RelativeOIDDecoderTestCase(BaseTestCase):
         assert decoder.decode(
             bytes((0x0D, 0x13, 0x88, 0x37, 0x83, 0xC6, 0xDF, 0xD4, 0xCC, 0xB3, 0xFF, 0xFF, 0xFE, 0xF0, 0xB8, 0xD6, 0xB8, 0xCB, 0xE2, 0xB6, 0x47))
         ) == ((1079, 18446744073709551535184467440737095), b'')
+
+    def testExcessiveContinuationOctets(self):
+        """Test that RELATIVE-OID arcs with excessive continuation octets are rejected."""
+        # Create a payload with 25 continuation octets (exceeds 20 limit)
+        malicious_payload = bytes([0x0D, 26]) + bytes([0x81] * 25) + bytes([0x01])
+        try:
+            decoder.decode(malicious_payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive continuation octets tolerated'
+
+    def testMaxAllowedContinuationOctets(self):
+        """Test that RELATIVE-OID arcs at the maximum continuation octets limit work."""
+        # Create a payload with exactly 20 continuation octets (at limit)
+        payload = bytes([0x0D, 21]) + bytes([0x81] * 20) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            assert 0, 'Valid RELATIVE-OID with 20 continuation octets rejected'
+
+    def testOneOverContinuationLimit(self):
+        """Test boundary: 21 continuation octets (one over limit) is rejected."""
+        payload = bytes([0x0D, 22]) + bytes([0x81] * 21) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, '21 continuation octets tolerated (should be rejected)'
+
+    def testExcessiveContinuationInSecondArc(self):
+        """Test that limit applies to subsequent arcs, not just the first."""
+        # First arc: valid simple byte
+        # Second arc: excessive continuation octets
+        payload = bytes([0x0D, 27]) + bytes([0x55]) + bytes([0x81] * 25) + bytes([0x01])
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive continuation in second arc tolerated'
+
+    def testMultipleArcsAtLimit(self):
+        """Test multiple arcs each at the continuation limit work correctly."""
+        # Two arcs, each with 20 continuation octets (both at limit)
+        arc1 = bytes([0x81] * 20) + bytes([0x01])  # 21 bytes
+        arc2 = bytes([0x81] * 20) + bytes([0x01])  # 21 bytes
+        payload = bytes([0x0D, 42]) + arc1 + arc2
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            assert 0, 'Multiple valid arcs at limit rejected'
+
+    def testExcessiveContinuationWithMaxBytes(self):
+        """Test with 0xFF continuation bytes (maximum value, not just 0x81)."""
+        # 0xFF bytes are also continuation octets (high bit set)
+        malicious_payload = bytes([0x0D, 26]) + bytes([0xFF] * 25) + bytes([0x01])
+        try:
+            decoder.decode(malicious_payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'Excessive 0xFF continuation octets tolerated'
 
 
 class RealDecoderTestCase(BaseTestCase):

@@ -33,6 +33,10 @@ noValue = base.noValue
 
 SubstrateUnderrunError = error.SubstrateUnderrunError
 
+# Maximum number of continuation octets (high-bit set) allowed per OID arc.
+# 20 octets allows up to 140-bit integers, supporting UUID-based OIDs
+MAX_OID_ARC_CONTINUATION_OCTETS = 20
+
 
 class AbstractPayloadDecoder(object):
     protoComponent = None
@@ -427,7 +431,14 @@ class ObjectIdentifierPayloadDecoder(AbstractSimplePayloadDecoder):
                 # Construct subid from a number of octets
                 nextSubId = subId
                 subId = 0
+                continuationOctetCount = 0
                 while nextSubId >= 128:
+                    continuationOctetCount += 1
+                    if continuationOctetCount > MAX_OID_ARC_CONTINUATION_OCTETS:
+                        raise error.PyAsn1Error(
+                            'OID arc exceeds maximum continuation octets limit (%d) '
+                            'at position %d' % (MAX_OID_ARC_CONTINUATION_OCTETS, index)
+                        )
                     subId = (subId << 7) + (nextSubId & 0x7F)
                     if index >= substrateLen:
                         raise error.SubstrateUnderrunError(
@@ -485,7 +496,14 @@ class RelativeOIDPayloadDecoder(AbstractSimplePayloadDecoder):
                 # Construct subid from a number of octets
                 nextSubId = subId
                 subId = 0
+                continuationOctetCount = 0
                 while nextSubId >= 128:
+                    continuationOctetCount += 1
+                    if continuationOctetCount > MAX_OID_ARC_CONTINUATION_OCTETS:
+                        raise error.PyAsn1Error(
+                            'RELATIVE-OID arc exceeds maximum continuation octets limit (%d) '
+                            'at position %d' % (MAX_OID_ARC_CONTINUATION_OCTETS, index)
+                        )
                     subId = (subId << 7) + (nextSubId & 0x7F)
                     if index >= substrateLen:
                         raise error.SubstrateUnderrunError(
@@ -1915,7 +1933,7 @@ class StreamingDecoder(object):
         :py:class:`~pyasn1.error.SubstrateUnderrunError` object indicating
         insufficient BER/CER/DER serialization on input to fully recover ASN.1
         objects from it.
-        
+
         In the latter case the caller is advised to ensure some more data in
         the input stream, then call the iterator again. The decoder will resume
         the decoding process using the newly arrived data.
