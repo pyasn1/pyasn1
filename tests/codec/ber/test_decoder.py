@@ -2131,6 +2131,61 @@ class CompressedFilesTestCase(BaseTestCase):
             os.remove(path)
 
 
+class LengthFieldLimitTestCase(BaseTestCase):
+    """Test protection against oversized BER length fields."""
+
+    def testOversizedLengthField(self):
+        """Length field exceeding MAX_LENGTH_OCTETS must raise PyAsn1Error."""
+        # 0x89 = long form, 9-byte length (exceeds 8-byte limit)
+        payload = b'\x02\x89' + b'\xFF' * 9 + b'\x01'
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Oversized length field not rejected'
+
+    def testNoOverflowError(self):
+        """Must raise PyAsn1Error, not OverflowError."""
+        payload = b'\x02\x90' + b'\xFF' * 16 + b'\x01'
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        except OverflowError:
+            assert False, 'Got OverflowError instead of PyAsn1Error'
+
+    def testMaxAllowedLengthFieldWorks(self):
+        """8-byte length field (the maximum allowed) must be accepted."""
+        # 0x88 = long form, 8-byte length, value = 5
+        payload = b'\x04\x88' + b'\x00' * 7 + b'\x05' + b'hello'
+        asn1Object, _ = decoder.decode(payload)
+        assert bytes(asn1Object) == b'hello', \
+            'Failed to decode with 8-byte length field'
+
+    def testNormalLengthFieldWorks(self):
+        """Standard short-form and long-form lengths must still work."""
+        # Short form: length < 128
+        asn1Object, _ = decoder.decode(b'\x02\x01\x05')
+        assert asn1Object == 5
+
+        # Long form 1-byte: 0x81 + 1 byte length
+        payload = b'\x04\x81\x05' + b'hello'
+        asn1Object, _ = decoder.decode(payload)
+        assert bytes(asn1Object) == b'hello'
+
+    def testErrorMessageContainsLimit(self):
+        """Error message must indicate the length field size limit."""
+        payload = b'\x02\x89' + b'\xFF' * 9 + b'\x01'
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error as exc:
+            assert 'length field size' in str(exc).lower(), \
+                'Error message missing size info: %s' % exc
+        else:
+            assert False, 'Expected PyAsn1Error'
+
+
 class NonStreamingCompatibilityTestCase(BaseTestCase):
     def setUp(self):
         from pyasn1 import debug
