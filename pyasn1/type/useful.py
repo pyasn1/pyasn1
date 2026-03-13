@@ -102,7 +102,8 @@ class TimeMixIn(object):
                 text, _, ms = text.partition(',')
 
             try:
-                ms = int(ms) * 1000
+                # Normalize variable-length fraction to microseconds
+                ms = int(ms.ljust(6, '0')[:6])
 
             except ValueError:
                 raise error.PyAsn1Error('bad sub-second time specification %s' % self)
@@ -139,8 +140,8 @@ class TimeMixIn(object):
             new instance of |ASN.1| value
         """
         text = dt.strftime(cls._yearsDigits == 4 and '%Y%m%d%H%M%S' or '%y%m%d%H%M%S')
-        if cls._hasSubsecond:
-            text += '.%d' % (dt.microsecond // 1000)
+        if cls._hasSubsecond and dt.microsecond:
+            text += ('.%06d' % dt.microsecond).rstrip('0')
 
         if dt.utcoffset():
             seconds = dt.utcoffset().seconds
