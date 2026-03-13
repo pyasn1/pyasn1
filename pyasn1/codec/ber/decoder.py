@@ -37,6 +37,9 @@ SubstrateUnderrunError = error.SubstrateUnderrunError
 # 20 octets allows up to 140-bit integers, supporting UUID-based OIDs
 MAX_OID_ARC_CONTINUATION_OCTETS = 20
 
+# Maximum number of bytes in a BER length field (8 bytes = up to 2^64-1)
+MAX_LENGTH_OCTETS = 8
+
 
 class AbstractPayloadDecoder(object):
     protoComponent = None
@@ -1682,13 +1685,18 @@ class SingleItemDecoder(object):
 
                 elif firstOctet > 128:
                     size = firstOctet & 0x7F
+
+                    if size > MAX_LENGTH_OCTETS:
+                        raise error.PyAsn1Error(
+                            'BER length field size %d exceeds limit (%d)' % (
+                                size, MAX_LENGTH_OCTETS)
+                        )
+
                     # encoded in size bytes
                     for encodedLength in readFromStream(substrate, size, options):
                         if isinstance(encodedLength, SubstrateUnderrunError):
                             yield encodedLength
                     encodedLength = list(encodedLength)
-                    # missing check on maximum size, which shouldn't be a
-                    # problem, we can handle more than is possible
                     if len(encodedLength) != size:
                         raise error.SubstrateUnderrunError(
                             '%s<%s at %s' % (size, len(encodedLength), tagSet)
@@ -2202,6 +2210,6 @@ decode = Decoder()
 
 def __getattr__(attr: str):
     if newAttr := {"tagMap": "TAG_MAP", "typeMap": "TYPE_MAP"}.get(attr):
-        warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+        warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning, stacklevel=2)
         return globals()[newAttr]
     raise AttributeError(attr)
