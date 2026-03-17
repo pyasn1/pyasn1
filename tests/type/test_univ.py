@@ -369,7 +369,12 @@ class BitStringTestCase(BaseTestCase):
         BaseTestCase.setUp(self)
 
         self.b = univ.BitString(
-            namedValues=namedval.NamedValues(('Active', 0), ('Urgent', 1))
+            namedValues=namedval.NamedValues(
+                ('Active', 0),
+                ('Urgent', 1),
+                ('Flagged', 2),
+                ('Blocked', 3),
+            )
         )
 
     def testBinDefault(self):
@@ -396,9 +401,23 @@ class BitStringTestCase(BaseTestCase):
         assert self.b.clone(hexValue='A98A') == (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0)
         assert self.b.clone('1010100110001010') == (1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0)
         assert self.b.clone((1, 0, 1)) == (1, 0, 1)
+        assert self.b.clone('Blocked') == (0, 0, 0, 1)
+        assert self.b.clone('Active, Blocked') == (1, 0, 0, 1)
+        assert self.b.clone(('Active', 'Blocked')) == (1, 0, 0, 1)
 
     def testStr(self):
         assert str(self.b.clone('Urgent')) == '01'
+
+    def testPrettyPrintNamedValues(self):
+        assert self.b.clone('Active').prettyPrint() == '1 (Active)'
+        assert self.b.clone('Urgent, Active').prettyPrint() == '11 (Active, Urgent)'
+        assert self.b.clone((1, 0, 1)).prettyPrint() == '101 (Active, Flagged)'
+        assert self.b.clone(binValue='00001').prettyPrint() == '00001 (<bit 4 unnamed>)'
+
+    def testPrettyPrint(self):
+        assert univ.BitString(binValue='1010100110001010').prettyPrint() == '1010100110001010'
+        assert univ.BitString(hexValue='A98A').prettyPrint() == '1010100110001010'
+
 
     def testRepr(self):
         assert 'BitString' in repr(self.b.clone('Urgent,Active'))
@@ -426,6 +445,9 @@ class BitStringTestCase(BaseTestCase):
     def testAsInts(self):
         assert self.b.clone(hexValue='A98A').asNumbers() == (0xa9, 0x8a), 'testAsNumbers() fails'
 
+    def testAsBinary(self):
+        assert self.b.clone(hexValue='A98A').asBinary() == '1010100110001010'
+
     def testMultipleOfEightPadding(self):
         assert self.b.clone((1, 0, 1)).asNumbers() == (5,)
 
@@ -439,6 +461,11 @@ class BitStringTestCase(BaseTestCase):
             pass
 
         assert BitString('11000000011001').asInteger() == 12313
+
+    def testUnrecognizedNamedValue(self):
+        with self.assertRaises(PyAsn1Error) as cm:
+            self.b.clone('Xyzzy')
+        self.assertEqual(str(cm.exception), 'Unrecognized named value: Xyzzy')
 
 
 class BitStringPicklingTestCase(unittest.TestCase):
