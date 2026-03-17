@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyasn1"
-license.text = "BSD-2-Clause"  # Replace with 'license' once Python 3.8 is dropped
+license = "BSD-2-Clause"
 description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
 readme = "README.md"
 authors = [
@@ -16,7 +16,7 @@ maintainers = [
     {name = "pyasn1 maintenance organization"},
     {name = "Christian Heimes", email = "christian@python.org"}
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -28,8 +28,6 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

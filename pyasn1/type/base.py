@@ -15,7 +15,7 @@ __all__ = ['Asn1Item', 'Asn1Type', 'SimpleAsn1Type',
            'ConstructedAsn1Type']
 
 
-class Asn1Item(object):
+class Asn1Item:
     @classmethod
     def getTypeId(cls, increment=1):
         try:
@@ -164,7 +164,7 @@ class Asn1Type(Asn1Item):
 Asn1ItemBase = Asn1Type
 
 
-class NoValue(object):
+class NoValue:
     """Create a singleton instance of NoValue class.
 
     The *NoValue* sentinel object represents an instance of ASN.1 schema

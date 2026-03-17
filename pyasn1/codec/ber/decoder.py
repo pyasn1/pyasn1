@@ -42,7 +42,7 @@ MAX_NESTING_DEPTH = 100
 MAX_LENGTH_OCTETS = 8
 
 
-class AbstractPayloadDecoder(object):
+class AbstractPayloadDecoder:
     protoComponent = None
 
     def valueDecoder(self, substrate, asn1Spec,
@@ -1546,7 +1546,7 @@ for typeDecoder in TAG_MAP.values():
 EOO_SENTINEL = bytes((0, 0))
 
 
-class SingleItemDecoder(object):
+class SingleItemDecoder:
     defaultErrorState = stErrorCondition
     #defaultErrorState = stDumpRawValue
     defaultRawDecoder = AnyPayloadDecoder()
@@ -1923,7 +1923,7 @@ class SingleItemDecoder(object):
         yield value
 
 
-class StreamingDecoder(object):
+class StreamingDecoder:
     """Create an iterator that turns BER/CER/DER byte stream into ASN.1 objects.
 
     On each iteration, consume whatever BER/CER/DER serialization is
@@ -2022,7 +2022,7 @@ class StreamingDecoder(object):
                 break
 
 
-class Decoder(object):
+class Decoder:
     """Create a BER decoder object.
 
     Parse BER/CER/DER octet-stream into one, possibly nested, ASN.1 object.

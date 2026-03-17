@@ -13,7 +13,7 @@ from pyasn1.type import tagmap
 __all__ = ['NamedType', 'OptionalNamedType', 'DefaultedNamedType',
            'NamedTypes']
 
-class NamedType(object):
+class NamedType:
     """Create named field object for a constructed ASN.1 type.
 
     The |NamedType| object represents a single name and ASN.1 type of a constructed ASN.1 type.
@@ -107,7 +107,7 @@ class DefaultedNamedType(NamedType):
     isDefaulted = True
 
 
-class NamedTypes(object):
+class NamedTypes:
     """Create a collection of named fields for a constructed ASN.1 type.
 
     The NamedTypes object represents a collection of named fields of a constructed ASN.1 type.
@@ -224,7 +224,7 @@ class NamedTypes(object):
     def clone(self):
         return self.__class__(*self.__namedTypes)
 
-    class PostponedError(object):
+    class PostponedError:
         def __init__(self, errorMsg):
             self.__errorMsg = errorMsg
 

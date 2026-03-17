@@ -16,7 +16,7 @@ from pyasn1.type import constraint
 from pyasn1.error import PyAsn1Error
 
 
-class AbstractStringTestCase(object):
+class AbstractStringTestCase:
 
     initializer = ()
     encoding = 'us-ascii'
