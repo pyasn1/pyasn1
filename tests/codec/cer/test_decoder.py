@@ -363,6 +363,30 @@ class SequenceDecoderWithExplicitlyTaggedSetOfOpenTypesTestCase(BaseTestCase):
         assert s[1][0] == univ.OctetString(hexValue='02010C')
 
 
+class NestingDepthLimitTestCase(BaseTestCase):
+    """Test CER decoder protection against deeply nested structures."""
+
+    def testIndefLenNesting(self):
+        """Deeply nested indefinite-length SEQUENCEs must raise PyAsn1Error."""
+        payload = b'\x30\x80' * 200
+        try:
+            decoder.decode(payload)
+        except PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested indef-length SEQUENCEs not rejected'
+
+    def testNoRecursionError(self):
+        """Must raise PyAsn1Error, not RecursionError."""
+        payload = b'\x30\x80' * 50000
+        try:
+            decoder.decode(payload)
+        except PyAsn1Error:
+            pass
+        except RecursionError:
+            assert False, 'Got RecursionError instead of PyAsn1Error'
+
+
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
 
 if __name__ == '__main__':

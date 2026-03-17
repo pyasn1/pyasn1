@@ -2172,6 +2172,122 @@ class LengthFieldLimitTestCase(BaseTestCase):
             assert False, 'Expected PyAsn1Error'
 
 
+class NestingDepthLimitTestCase(BaseTestCase):
+    """Test protection against deeply nested ASN.1 structures (CVE prevention)."""
+
+    def testIndefLenSequenceNesting(self):
+        """Deeply nested indefinite-length SEQUENCEs must raise PyAsn1Error."""
+        # Each \x30\x80 opens a new indefinite-length SEQUENCE
+        payload = b'\x30\x80' * 200
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested indef-length SEQUENCEs not rejected'
+
+    def testIndefLenSetNesting(self):
+        """Deeply nested indefinite-length SETs must raise PyAsn1Error."""
+        # Each \x31\x80 opens a new indefinite-length SET
+        payload = b'\x31\x80' * 200
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested indef-length SETs not rejected'
+
+    def testDefiniteLenNesting(self):
+        """Deeply nested definite-length SEQUENCEs must raise PyAsn1Error."""
+        inner = b'\x05\x00'  # NULL
+        for _ in range(200):
+            length = len(inner)
+            if length < 128:
+                inner = b'\x30' + bytes([length]) + inner
+            else:
+                length_bytes = length.to_bytes(
+                    (length.bit_length() + 7) // 8, 'big')
+                inner = b'\x30' + bytes([0x80 | len(length_bytes)]) + \
+                    length_bytes + inner
+        try:
+            decoder.decode(inner)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested definite-length SEQUENCEs not rejected'
+
+    def testNestingUnderLimitWorks(self):
+        """Nesting within the limit must decode successfully."""
+        inner = b'\x05\x00'  # NULL
+        for _ in range(50):
+            length = len(inner)
+            if length < 128:
+                inner = b'\x30' + bytes([length]) + inner
+            else:
+                length_bytes = length.to_bytes(
+                    (length.bit_length() + 7) // 8, 'big')
+                inner = b'\x30' + bytes([0x80 | len(length_bytes)]) + \
+                    length_bytes + inner
+        asn1Object, _ = decoder.decode(inner)
+        assert asn1Object is not None, 'Valid nested structure rejected'
+
+    def testSiblingsDontIncreaseDepth(self):
+        """Sibling elements at the same level must not inflate depth count."""
+        # SEQUENCE containing 200 INTEGER siblings - should decode fine
+        components = b'\x02\x01\x01' * 200  # 200 x INTEGER(1)
+        length = len(components)
+        length_bytes = length.to_bytes(
+            (length.bit_length() + 7) // 8, 'big')
+        payload = b'\x30' + bytes([0x80 | len(length_bytes)]) + \
+            length_bytes + components
+        asn1Object, _ = decoder.decode(payload)
+        assert asn1Object is not None, 'Siblings incorrectly rejected'
+
+    def testErrorMessageContainsLimit(self):
+        """Error message must indicate the nesting depth limit."""
+        payload = b'\x30\x80' * 200
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error as exc:
+            assert 'nesting depth' in str(exc).lower(), \
+                'Error message missing depth info: %s' % exc
+        else:
+            assert False, 'Expected PyAsn1Error'
+
+    def testNoRecursionError(self):
+        """Must raise PyAsn1Error, not RecursionError."""
+        payload = b'\x30\x80' * 50000
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        except RecursionError:
+            assert False, 'Got RecursionError instead of PyAsn1Error'
+
+    def testMixedNesting(self):
+        """Mixed SEQUENCE and SET nesting must be caught."""
+        # Alternate SEQUENCE (0x30) and SET (0x31) with indef length
+        payload = b''
+        for i in range(200):
+            payload += b'\x30\x80' if i % 2 == 0 else b'\x31\x80'
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Mixed nesting not rejected'
+
+    def testWithSchema(self):
+        """Deeply nested structures must be caught even with schema."""
+        payload = b'\x30\x80' * 200
+        try:
+            decoder.decode(payload, asn1Spec=univ.Sequence())
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested with schema not rejected'
+
+
 class NonStreamingCompatibilityTestCase(BaseTestCase):
     def setUp(self):
         from pyasn1 import debug
