@@ -1,3 +1,19 @@
+Revision 0.6.3, released 16-03-2026
+---------------------------------------
+
+- CVE-2026-30922 (GHSA-jr27-m4p2-rc6r): Added nesting depth
+  limit to ASN.1 decoder to prevent stack overflow from deeply
+  nested structures (thanks for reporting, romanticpragmatism)
+- Fixed OverflowError from oversized BER length field
+  [issue #54](https://github.com/pyasn1/pyasn1/issues/54)
+  [pr #100](https://github.com/pyasn1/pyasn1/pull/100)
+- Fixed DeprecationWarning stacklevel for deprecated attributes
+  [issue #86](https://github.com/pyasn1/pyasn1/issues/86)
+  [pr #101](https://github.com/pyasn1/pyasn1/pull/101)
+- Fixed asDateTime incorrect fractional seconds parsing
+  [issue #81](https://github.com/pyasn1/pyasn1/issues/81)
+  [pr #102](https://github.com/pyasn1/pyasn1/pull/102)
+
 Revision 0.6.2, released 16-01-2026
 ---------------------------------------
 
