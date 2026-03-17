@@ -361,6 +361,48 @@ class SequenceDecoderWithExplicitlyTaggedSetOfOpenTypesTestCase(BaseTestCase):
         assert s[1][0] == univ.OctetString(hexValue='02010C')
 
 
+class NestingDepthLimitTestCase(BaseTestCase):
+    """Test DER decoder protection against deeply nested structures."""
+
+    def testDefiniteLenNesting(self):
+        """Deeply nested definite-length SEQUENCEs must raise PyAsn1Error."""
+        inner = b'\x05\x00'  # NULL
+        for _ in range(200):
+            length = len(inner)
+            if length < 128:
+                inner = b'\x30' + bytes([length]) + inner
+            else:
+                length_bytes = length.to_bytes(
+                    (length.bit_length() + 7) // 8, 'big')
+                inner = b'\x30' + bytes([0x80 | len(length_bytes)]) + \
+                    length_bytes + inner
+        try:
+            decoder.decode(inner)
+        except PyAsn1Error:
+            pass
+        else:
+            assert False, 'Deeply nested definite-length SEQUENCEs not rejected'
+
+    def testNoRecursionError(self):
+        """Must raise PyAsn1Error, not RecursionError."""
+        inner = b'\x05\x00'
+        for _ in range(200):
+            length = len(inner)
+            if length < 128:
+                inner = b'\x30' + bytes([length]) + inner
+            else:
+                length_bytes = length.to_bytes(
+                    (length.bit_length() + 7) // 8, 'big')
+                inner = b'\x30' + bytes([0x80 | len(length_bytes)]) + \
+                    length_bytes + inner
+        try:
+            decoder.decode(inner)
+        except PyAsn1Error:
+            pass
+        except RecursionError:
+            assert False, 'Got RecursionError instead of PyAsn1Error'
+
+
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
 
 if __name__ == '__main__':
