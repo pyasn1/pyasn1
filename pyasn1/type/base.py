@@ -499,11 +499,13 @@ class ConstructedAsn1Type(Asn1Type):
     sizeSpec = constraint.ConstraintsIntersection()
 
     def __init__(self, **kwargs):
-        readOnly = {
-            'componentType': self.componentType,
-            # backward compatibility, unused
-            'sizeSpec': self.sizeSpec
-        }
+        readOnly = {}
+
+        if 'componentType' in kwargs:
+            readOnly['componentType'] = kwargs.pop('componentType')
+
+        if 'sizeSpec' in kwargs:
+            readOnly['sizeSpec'] = kwargs.pop('sizeSpec')
 
         # backward compatibility: preserve legacy sizeSpec support
         kwargs = self._moveSizeSpec(**kwargs)
