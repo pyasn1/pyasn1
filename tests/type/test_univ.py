@@ -2169,6 +2169,33 @@ class Choice(BaseTestCase):
         s.clear()
         assert s.getComponentByPosition(1, instantiate=False) is univ.noValue
 
+    def testRecursiveTypeFreezing(self):
+        # 1. Define recursive types
+        class Filter(univ.Choice):
+            pass
+
+        class And(univ.SetOf):
+            componentType = Filter()
+
+        # 2. Complete the recursive definition
+        Filter.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('and', And().clone(
+                tagSet=And.tagSet.tagImplicitly(tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))
+            ))
+        )
+
+        # 3. Verify the fix: instances should pick up the class-level update
+        # Before the fix, Filter() instance would have an empty NamedTypes()
+        # frozen in its _readOnly dict.
+        f = Filter()
+        assert len(f.componentType) == 1
+        assert 'and' in f.componentType
+        
+        # Verify nested picking up
+        a = And()
+        assert len(a.componentType.componentType) == 1
+        assert 'and' in a.componentType.componentType
+
 
 class ChoicePicklingTestCase(unittest.TestCase):
 
