@@ -467,6 +467,10 @@ class BitStringTestCase(BaseTestCase):
             self.b.clone('Xyzzy')
         self.assertEqual(str(cm.exception), 'Unrecognized named value: Xyzzy')
 
+    def testEmpty(self):
+        assert self.b.clone([]).asInteger() == 0
+        assert self.b.clone(()).asInteger() == 0
+
 
 class BitStringPicklingTestCase(unittest.TestCase):
 

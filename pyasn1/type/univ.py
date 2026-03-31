@@ -666,6 +666,9 @@ class BitString(base.SimpleAsn1Type):
                 return self.fromBinaryString(value, internalFormat=True)
 
         elif isinstance(value, (tuple, list)):
+            if not value:
+                return SizedInteger(0).setBitLength(0)
+
             if self.namedValues and all(isinstance(v, str) for v in value):
                 try:
                     bits = [self.namedValues[name] for name in value]
