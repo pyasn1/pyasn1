@@ -1718,6 +1718,12 @@ class SingleItemDecoder(object):
                         length |= lengthOctet
                     size += 1
 
+                    if length > sys.maxsize:
+                        raise error.PyAsn1Error(
+                            'Length %d exceeds maximum readable size %d' % (
+                                length, sys.maxsize)
+                        )
+
                 else:  # 128 means indefinite
                     length = -1
 

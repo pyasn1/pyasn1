@@ -2155,6 +2155,19 @@ class LengthFieldLimitTestCase(BaseTestCase):
         except OverflowError:
             assert False, 'Got OverflowError instead of PyAsn1Error'
 
+    def testInRangeOctetCountButOverflowingValue(self):
+        """8-byte length whose value exceeds sys.maxsize must raise PyAsn1Error."""
+        # 0x88 = long form, 8 length octets (within the limit), value 2**64-1
+        payload = b'\x04\x88' + b'\xFF' * 8
+        try:
+            decoder.decode(payload)
+        except error.PyAsn1Error:
+            pass
+        except OverflowError:
+            assert False, 'Got OverflowError instead of PyAsn1Error'
+        else:
+            assert False, 'Overflowing length value not rejected'
+
     def testMaxAllowedLengthFieldWorks(self):
         """8-byte length field (the maximum allowed) must be accepted."""
         # 0x88 = long form, 8-byte length, value = 5
