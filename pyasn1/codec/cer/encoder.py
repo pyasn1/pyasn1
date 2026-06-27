@@ -177,9 +177,17 @@ class SetEncoder(encoder.SequenceEncoder):
 
             namedTypes = value.componentType
 
-            for idx, component in enumerate(value.values()):
+            for idx in range(value._componentTypeLen or len(value._dynamicNames)):
+                component = value.getComponentByPosition(idx, instantiate=False)
+
                 if namedTypes:
                     namedType = namedTypes[idx]
+
+                    if component is univ.noValue and (
+                            namedType.isOptional or namedType.isDefaulted):
+                        continue
+                    elif component is univ.noValue:
+                        component = namedType.asn1Object
 
                     if namedType.isOptional and not component.isValue:
                             continue

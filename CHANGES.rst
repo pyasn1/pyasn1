@@ -5,6 +5,11 @@ Revision 0.6.4, released XX-XX-2026
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.
   [pr #108](https://github.com/pyasn1/pyasn1/pull/108)
+- Fixed encoder side effect where BER/CER/DER/native encoders could
+  instantiate absent DEFAULT components while encoding. Encoding now
+  preserves component absence when inspected with ``instantiate=False``.
+  Applications relying on ``encode()`` to populate defaulted components
+  should explicitly instantiate or set those components before encoding.
 
 Revision 0.6.3, released 16-03-2026
 ---------------------------------------

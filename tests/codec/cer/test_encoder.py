@@ -328,6 +328,24 @@ class SetEncoderTestCase(BaseTestCase):
         ) == bytes((49, 128, 2, 1, 1, 4, 11, 113, 117, 105, 99, 107, 32, 98, 114, 111, 119, 110, 5, 0, 0, 0))
 
 
+class DefaultedSetEncoderNoMutationTestCase(BaseTestCase):
+    def setUp(self):
+        BaseTestCase.setUp(self)
+
+        self.s = univ.Set(componentType=namedtype.NamedTypes(
+            namedtype.NamedType('id', univ.Integer()),
+            namedtype.DefaultedNamedType('house', univ.Integer(0))
+        ))
+
+    def testDefaultedComponentNotInstantiated(self):
+        self.s.clear()
+        self.s['id'] = 123
+
+        assert self.s.getComponentByName('house', instantiate=False) is univ.noValue
+        assert encoder.encode(self.s) == bytes((49, 128, 2, 1, 123, 0, 0))
+        assert self.s.getComponentByName('house', instantiate=False) is univ.noValue
+
+
 class SetEncoderWithSchemaTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)
