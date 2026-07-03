@@ -83,9 +83,24 @@ class SetEncoder(AbstractItemEncoder):
         namedTypes = value.componentType
         substrate = self.protoDict()
 
-        for idx, (key, subValue) in enumerate(value.items()):
-            if namedTypes and namedTypes[idx].isOptional and not value[idx].isValue:
-                continue
+        for idx in range(value._componentTypeLen or len(value._dynamicNames)):
+            if namedTypes:
+                namedType = namedTypes[idx]
+                key = namedType.name
+                subValue = value.getComponentByPosition(idx, instantiate=False)
+
+                if subValue is univ.noValue:
+                    if namedType.isDefaulted:
+                        subValue = namedType.asn1Object
+                    elif namedType.isOptional:
+                        continue
+                    else:
+                        subValue = namedType.asn1Object
+
+            else:
+                key = value._dynamicNames.getNameByPosition(idx)
+                subValue = value.getComponentByPosition(idx, instantiate=False)
+
             substrate[key] = encodeFun(subValue, **options)
         return substrate
 
@@ -104,7 +119,18 @@ class SequenceOfEncoder(AbstractItemEncoder):
 
 
 class ChoiceEncoder(SequenceEncoder):
-    pass
+    def encode(self, value, encodeFun, **options):
+        inconsistency = value.isInconsistent
+        if inconsistency:
+            raise error.PyAsn1Error(
+                f"ASN.1 object {value.__class__.__name__} is inconsistent")
+
+        substrate = self.protoDict()
+
+        for key, subValue in value.items():
+            substrate[key] = encodeFun(subValue, **options)
+
+        return substrate
 
 
 class AnyEncoder(AbstractItemEncoder):

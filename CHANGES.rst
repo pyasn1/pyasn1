@@ -12,6 +12,11 @@ Revision 0.6.4, released XX-XX-2026
   instantiation (as recursive definitions require) is picked up by codecs.
   Recursion through untagged CHOICE alternatives was never supported and
   remains unsupported
+- Fixed encoder side effect where BER/CER/DER/native encoders could
+  instantiate absent DEFAULT components while encoding. Encoding now
+  preserves component absence when inspected with ``instantiate=False``.
+  Applications relying on ``encode()`` to populate defaulted components
+  should explicitly instantiate or set those components before encoding.
 
 Revision 0.6.3, released 16-03-2026
 ---------------------------------------

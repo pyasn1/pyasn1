@@ -99,6 +99,14 @@ class SequenceEncoderTestCase(BaseTestCase):
         s[2] = 123
         assert encoder.encode(s) == {'place-holder': None, 'first-name': b'abc', 'age': 123}
 
+    def testDefaultedComponentNotInstantiated(self):
+        s = self.s.clone()
+        s[0] = univ.Null('')
+
+        assert s.getComponentByName('age', instantiate=False) is univ.noValue
+        assert encoder.encode(s) == {'place-holder': None, 'age': 33}
+        assert s.getComponentByName('age', instantiate=False) is univ.noValue
+
 
 class ChoiceEncoderTestCase(BaseTestCase):
     def setUp(self):
