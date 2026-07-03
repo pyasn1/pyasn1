@@ -47,13 +47,13 @@ jobs:
       - name: "Run twine check"
         run: "python -m twine check dist/*"
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
         if: inputs.testpypi || false
       - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
         if: inputs.pypi || false
