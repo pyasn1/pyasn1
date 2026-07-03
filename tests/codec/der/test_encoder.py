@@ -475,6 +475,47 @@ class NestedOptionalSequenceEncoderTestCase(BaseTestCase):
         assert encoder.encode(s) == bytes((48, 5, 48, 3, 2, 1, 123))
 
 
+class DefaultedSequenceEncoderNoMutationTestCase(BaseTestCase):
+    def setUp(self):
+        BaseTestCase.setUp(self)
+
+        self.record = univ.Sequence(
+            componentType=namedtype.NamedTypes(
+                namedtype.NamedType('id', univ.Integer()),
+                namedtype.OptionalNamedType(
+                    'room', univ.Integer().subtype(
+                        implicitTag=tag.Tag(
+                            tag.tagClassContext, tag.tagFormatSimple, 0
+                        )
+                    )
+                ),
+                namedtype.DefaultedNamedType(
+                    'house', univ.Integer(0).subtype(
+                        implicitTag=tag.Tag(
+                            tag.tagClassContext, tag.tagFormatSimple, 1
+                        )
+                    )
+                )
+            )
+        )
+
+    def __initRecord(self):
+        record = self.record.clone()
+        record['id'] = 123
+        record['room'] = 321
+        return record
+
+    def testDefaultedComponentNotInstantiated(self):
+        record = self.__initRecord()
+        reference = self.__initRecord()
+
+        assert record == reference
+        assert record.getComponentByName('house', instantiate=False) is univ.noValue
+        assert encoder.encode(record) == bytes((48, 7, 2, 1, 123, 128, 2, 1, 65))
+        assert record.getComponentByName('house', instantiate=False) is univ.noValue
+        assert record == reference
+
+
 class NestedOptionalChoiceEncoderTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)
