@@ -70,22 +70,24 @@ class TimeEncoderMixIn(object):
 
             numbers = list(numbers)
 
-            searchIndex = min(numbers.index(self.DOT_CHAR) + 4, len(numbers) - 1)
+            dotIndex = numbers.index(self.DOT_CHAR)
 
-            while numbers[searchIndex] != self.DOT_CHAR:
-                if numbers[searchIndex] == self.ZERO_CHAR:
-                    del numbers[searchIndex]
-                    isModified = True
+            # Strip only the *trailing* zeros of the fractional part. The
+            # fraction ends right before the mandatory 'Z' terminator, which
+            # is the last character (already validated above). Leading and
+            # embedded zeros are significant (e.g. '.099' != '.99') and must
+            # be preserved.
+            searchIndex = len(numbers) - 2
 
+            while searchIndex > dotIndex and numbers[searchIndex] == self.ZERO_CHAR:
+                del numbers[searchIndex]
                 searchIndex -= 1
+                isModified = True
 
-            searchIndex += 1
-
-            if searchIndex < len(numbers):
-                if numbers[searchIndex] == self.Z_CHAR:
-                    # drop hanging comma
-                    del numbers[searchIndex - 1]
-                    isModified = True
+            # Drop the now-hanging dot if no fractional digits are left.
+            if searchIndex == dotIndex:
+                del numbers[dotIndex]
+                isModified = True
 
             if isModified:
                 value = value.clone(numbers)
