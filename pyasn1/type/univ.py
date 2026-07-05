@@ -871,7 +871,7 @@ class OctetString(base.SimpleAsn1Type):
         for x in numbers:
             # hexify if needed
             if x < 32 or x > 126:
-                return '0x' + ''.join(('%.2x' % x for x in numbers))
+                return '0x' + ''.join('%.2x' % x for x in numbers)
         else:
             # this prevents infinite recursion
             return OctetString.__str__(self)
@@ -2185,7 +2185,7 @@ class SequenceAndSetBase(base.ConstructedAsn1Type):
     componentType = namedtype.NamedTypes()
 
 
-    class DynamicNames(object):
+    class DynamicNames:
         """Fields names/positions mapping for component-less objects"""
         def __init__(self):
             self._keyToIdxMap = {}

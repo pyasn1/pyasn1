@@ -17,7 +17,7 @@ __all__ = ['SingleValueConstraint', 'ContainedSubtypeConstraint',
            'ConstraintsUnion']
 
 
-class AbstractConstraint(object):
+class AbstractConstraint:
 
     def __init__(self, *values):
         self._valueMap = set()

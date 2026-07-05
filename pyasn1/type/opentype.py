@@ -8,7 +8,7 @@
 __all__ = ['OpenType']
 
 
-class OpenType(object):
+class OpenType:
     """Create ASN.1 type map indexed by a value
 
     The *OpenType* object models an untyped field of a constructed ASN.1

@@ -27,7 +27,7 @@ FLAG_MAP = {
 LOGGEE_MAP = {}
 
 
-class Printer(object):
+class Printer:
     # noinspection PyShadowingNames
     def __init__(self, logger=None, handler=None, formatter=None):
         if logger is None:
@@ -54,7 +54,7 @@ class Printer(object):
         return '<python logging>'
 
 
-class Debug(object):
+class Debug:
     defaultPrinter = Printer()
 
     def __init__(self, *flags, **options):
@@ -130,7 +130,7 @@ def hexdump(octets):
     )
 
 
-class Scope(object):
+class Scope:
     def __init__(self):
         self._list = []
 
