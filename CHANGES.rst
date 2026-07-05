@@ -5,6 +5,13 @@ Revision 0.6.4, released XX-XX-2026
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.
   [pr #108](https://github.com/pyasn1/pyasn1/pull/108)
+- Fixed regression introduced in 0.5.0 that broke decoding of recursively
+  defined ASN.1 types with tagged alternatives (e.g. LDAP Filter). A
+  placeholder `componentType` captured at instantiation is now re-resolved
+  from the class on `clone()` and `subtype()`, so a schema completed after
+  instantiation (as recursive definitions require) is picked up by codecs.
+  Recursion through untagged CHOICE alternatives was never supported and
+  remains unsupported
 - Fixed encoder side effect where BER/CER/DER/native encoders could
   instantiate absent DEFAULT components while encoding. Encoding now
   preserves component absence when inspected with ``instantiate=False``.

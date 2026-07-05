@@ -1112,6 +1112,22 @@ class SequenceOf(BaseTestCase):
         assert len(s) == 1
         assert s.getComponentByPosition(0) == self.s1.getComponentByPosition(0)
 
+    def testCloneWithNoValueComponentType(self):
+        s = univ.SequenceOf(componentType=univ.noValue)
+
+        assert s.clone().componentType is univ.noValue
+
+        s = s.subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 7))
+
+        assert s.componentType is univ.noValue
+
+    def testCloneAfterPickleKeepsComponentType(self):
+        s = pickle.loads(pickle.dumps(
+            univ.SequenceOf(componentType=univ.Sequence())
+        ))
+
+        assert s.clone().componentType is s.componentType
+
     def testSetComponents(self):
         assert self.s1.clone().setComponents('abc', 'def') == \
                self.s1.setComponentByPosition(0, 'abc').setComponentByPosition(1, 'def')
@@ -1799,6 +1815,95 @@ class SequenceWithoutSchema(BaseTestCase):
 
         assert not s.isValue
 
+    def testInheritedComponentTypeReadOnly(self):
+
+        class ParentSequence(univ.Sequence):
+            componentType = namedtype.NamedTypes(
+                namedtype.NamedType('name', univ.OctetString())
+            )
+
+        class ChildSequence(ParentSequence):
+            pass
+
+        s = ChildSequence()
+
+        try:
+            s.componentType = namedtype.NamedTypes(
+                namedtype.NamedType('name', univ.OctetString()),
+                namedtype.NamedType('age', univ.Integer())
+            )
+
+        except error.PyAsn1Error:
+            pass
+
+        else:
+            assert False, 'componentType instance assignment tolerated'
+
+    def testInheritedComponentTypeSnapshot(self):
+
+        class ParentSequence(univ.Sequence):
+            componentType = namedtype.NamedTypes(
+                namedtype.NamedType('name', univ.OctetString())
+            )
+
+        class ChildSequence(ParentSequence):
+            pass
+
+        s = ChildSequence()
+
+        ParentSequence.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('name', univ.OctetString()),
+            namedtype.NamedType('age', univ.Integer())
+        )
+
+        assert len(s.componentType) == 1
+        assert 'age' not in s
+
+    def testExplicitEmptyComponentTypeOverridePreserved(self):
+
+        class ParentSequence(univ.Sequence):
+            componentType = namedtype.NamedTypes(
+                namedtype.NamedType('name', univ.OctetString())
+            )
+
+        s = ParentSequence(componentType=namedtype.NamedTypes())
+
+        assert len(s.componentType) == 0
+        assert len(s.clone().componentType) == 0
+        assert len(s.clone().clone().componentType) == 0
+        assert len(s.subtype(implicitTag=tag.Tag(
+            tag.tagClassContext, tag.tagFormatConstructed, 5)).componentType) == 0
+
+        # objects restored from pickles created by older pyasn1 carry no
+        # explicitness flag and must conservatively keep their snapshot
+        del s.__dict__['_componentTypeExplicit']
+
+        assert len(s.clone().componentType) == 0
+
+    def testLateBoundComponentTypeOnExistingInstance(self):
+
+        class LateSequence(univ.Sequence):
+            pass
+
+        s = LateSequence()
+
+        LateSequence.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('name', univ.OctetString())
+        )
+
+        # the existing instance consistently keeps its pre-assignment schema
+        assert len(s.componentType) == 0
+        assert 'name' not in s
+
+        # new instances, including clones of the old one, pick up the schema
+        s = s.clone()
+
+        s['name'] = 'abc'
+
+        assert s['name'] == b'abc'
+        assert 'name' in s
+        assert len(s.componentType) == 1
+
 
 class SequencePicklingTestCase(unittest.TestCase):
 
@@ -2168,6 +2273,28 @@ class Choice(BaseTestCase):
         assert s.getComponentByPosition(1, instantiate=False) == 123
         s.clear()
         assert s.getComponentByPosition(1, instantiate=False) is univ.noValue
+
+    def testLateBoundComponentTypeOnExistingInstance(self):
+
+        class LateChoice(univ.Choice):
+            pass
+
+        s = LateChoice()
+
+        LateChoice.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('number', univ.Integer())
+        )
+
+        # the existing instance consistently keeps its pre-assignment schema
+        assert len(s.componentType) == 0
+
+        # new instances, including clones of the old one, pick up the schema
+        s = s.clone()
+
+        s['number'] = 123
+
+        assert s['number'] == 123
+        assert s.getName() == 'number'
 
 
 class ChoicePicklingTestCase(unittest.TestCase):

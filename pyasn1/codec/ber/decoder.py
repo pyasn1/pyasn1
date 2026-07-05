@@ -752,7 +752,7 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
 
         if asn1Spec.typeId in (univ.Sequence.typeId, univ.Set.typeId):
 
-            namedTypes = asn1Spec.componentType
+            namedTypes = asn1Object.componentType
 
             isSetType = asn1Spec.typeId == univ.Set.typeId
             isDeterministic = not isSetType and not namedTypes.hasOptionalOrDefault
@@ -900,7 +900,7 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
                         f"ASN.1 object {asn1Object.__class__.__name__} is inconsistent")
 
         else:
-            componentType = asn1Spec.componentType
+            componentType = asn1Object.componentType
 
             if LOG:
                 LOG('decoding type %r chosen by given `asn1Spec`' % componentType)
@@ -1126,7 +1126,7 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
                             f"ASN.1 object {asn1Object.__class__.__name__} is inconsistent")
 
         else:
-            componentType = asn1Spec.componentType
+            componentType = asn1Object.componentType
 
             if LOG:
                 LOG('decoding type %r chosen by given `asn1Spec`' % componentType)

@@ -879,6 +879,48 @@ class SetOfDecoderWithSchemaTestCase(BaseTestCase):
         ) == (self.s, b'')
 
 
+class SetOfDecoderWithLateBoundComponentTypeTestCase(BaseTestCase):
+    def testDefMode(self):
+        class AttributeValueAssertion(univ.Sequence):
+            componentType = namedtype.NamedTypes(
+                namedtype.NamedType('attributeDesc', univ.OctetString()),
+                namedtype.NamedType('assertionValue', univ.OctetString())
+            )
+
+        class EqualityMatch(AttributeValueAssertion):
+            tagSet = AttributeValueAssertion.tagSet.tagImplicitly(
+                tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 3)
+            )
+
+        class And(univ.SetOf):
+            tagSet = univ.SetOf.tagSet.tagImplicitly(
+                tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0)
+            )
+
+        class NestedFilter(univ.Choice):
+            pass
+
+        class Filter(univ.Choice):
+            pass
+
+        Filter.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('and', And())
+        )
+        NestedFilter.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('equalityMatch', EqualityMatch())
+        )
+        And.componentType = NestedFilter()
+
+        asn1Object, rest = decoder.decode(
+            bytes.fromhex('a00ea30c040375696404057573657231'),
+            asn1Spec=Filter()
+        )
+
+        assert not rest
+        assert asn1Object['and'][0]['equalityMatch']['attributeDesc'] == b'uid'
+        assert asn1Object['and'][0]['equalityMatch']['assertionValue'] == b'user1'
+
+
 class SequenceDecoderTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)

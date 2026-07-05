@@ -86,6 +86,23 @@ class SequenceDecoderTestCase(BaseTestCase):
         assert decoder.decode({'place-holder': None, 'first-name': 'xx', 'age': 33}, asn1Spec=self.s) == s
 
 
+class SequenceDecoderWithLateBoundComponentTypeTestCase(BaseTestCase):
+    def testLateBoundSpec(self):
+
+        class LateSequence(univ.Sequence):
+            pass
+
+        s = LateSequence()
+
+        LateSequence.componentType = namedtype.NamedTypes(
+            namedtype.NamedType('name', univ.OctetString())
+        )
+
+        asn1Value = decoder.decode({'name': 'abc'}, asn1Spec=s)
+
+        assert asn1Value['name'] == b'abc'
+
+
 class ChoiceDecoderTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)

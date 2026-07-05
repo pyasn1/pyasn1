@@ -499,6 +499,8 @@ class ConstructedAsn1Type(Asn1Type):
     sizeSpec = constraint.ConstraintsIntersection()
 
     def __init__(self, **kwargs):
+        self._componentTypeExplicit = 'componentType' in kwargs
+
         readOnly = {
             'componentType': self.componentType,
             # backward compatibility, unused
@@ -570,6 +572,45 @@ class ConstructedAsn1Type(Asn1Type):
     def _cloneComponentValues(self, myClone, cloneValueFlag):
         pass
 
+    @staticmethod
+    def _isComponentTypePlaceholder(componentType):
+        if componentType is None:
+            return True
+
+        if componentType is noValue or isinstance(componentType, Asn1Item):
+            return False
+
+        return not componentType
+
+    def _cloneInitializers(self):
+        initializers = self.readOnly.copy()
+
+        componentType = initializers.get('componentType')
+
+        # objects restored from pickles predating the explicitness flag are
+        # conservatively treated as explicit, keeping their frozen snapshot
+        if (self._isComponentTypePlaceholder(componentType) and
+                not getattr(self, '_componentTypeExplicit', True)):
+            # A placeholder componentType was captured from the class before
+            # a recursively defined type was completed (e.g. LDAP Filter).
+            # Leave it out so that the new instance resolves componentType
+            # from the class, which may have been given a concrete schema
+            # afterwards. An explicitly supplied componentType, placeholder
+            # or not, is preserved as given.
+            del initializers['componentType']
+
+        elif (isinstance(componentType, ConstructedAsn1Type) and
+                not getattr(componentType, '_componentTypeExplicit', True) and
+                self._isComponentTypePlaceholder(componentType.componentType) and
+                componentType.componentType is not type(componentType).componentType and
+                not self._isComponentTypePlaceholder(type(componentType).componentType)):
+            # The component schema object itself captured a placeholder
+            # that was completed on its class afterwards. Re-clone it so
+            # that the resolved schema guides decoding of the components.
+            initializers['componentType'] = componentType.clone()
+
+        return initializers
+
     def clone(self, **kwargs):
         """Create a modified version of |ASN.1| schema object.
 
@@ -595,7 +636,7 @@ class ConstructedAsn1Type(Asn1Type):
         """
         cloneValueFlag = kwargs.pop('cloneValueFlag', False)
 
-        initializers = self.readOnly.copy()
+        initializers = self._cloneInitializers()
         initializers.update(kwargs)
 
         clone = self.__class__(**initializers)
@@ -647,7 +688,7 @@ class ConstructedAsn1Type(Asn1Type):
         are supplied, a new |ASN.1| object will be created and returned.
         """
 
-        initializers = self.readOnly.copy()
+        initializers = self._cloneInitializers()
 
         cloneValueFlag = kwargs.pop('cloneValueFlag', False)
 
