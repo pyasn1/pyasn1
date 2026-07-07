@@ -6,6 +6,7 @@
 #
 import sys
 import unittest
+from datetime import datetime, timezone
 
 from tests.base import BaseTestCase
 
@@ -167,6 +168,18 @@ class GeneralizedTimeEncoderTestCase(BaseTestCase):
         assert encoder.encode(
                     useful.GeneralizedTime('201708011201Z')
              ) == bytes((24, 13, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 90))
+
+    def testFromDateTimeMicroseconds(self):
+        # fromDateTime() emits microsecond precision (six fractional digits),
+        # so 'YYYYMMDDHHMMSS.ffffffZ' is 22 characters. CER/DER must admit that
+        # length instead of rejecting it with a length-constraint violation.
+        gt = useful.GeneralizedTime.fromDateTime(
+            datetime(2017, 7, 11, 0, 1, 2, 123456, tzinfo=timezone.utc))
+        encoded = encoder.encode(gt)
+        assert encoded == bytes((24, 22)) + b'20170711000102.123456Z'
+        decoded, rest = decoder.decode(encoded)
+        assert not rest
+        assert str(decoded) == '20170711000102.123456Z'
 
 
 class UTCTimeEncoderTestCase(BaseTestCase):

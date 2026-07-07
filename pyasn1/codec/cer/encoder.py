@@ -104,7 +104,11 @@ class TimeEncoderMixIn(object):
 
 class GeneralizedTimeEncoder(TimeEncoderMixIn, encoder.OctetStringEncoder):
     MIN_LENGTH = 12
-    MAX_LENGTH = 20
+    # 'YYYYMMDDHHMMSS.ffffffZ' is 22 characters: 14 for the date-time, the dot,
+    # up to six fractional digits (the microsecond precision fromDateTime() can
+    # emit) and the mandatory 'Z'. The bound is exclusive, so 23 admits exactly
+    # that maximum while still rejecting anything longer.
+    MAX_LENGTH = 23
 
 
 class UTCTimeEncoder(TimeEncoderMixIn, encoder.OctetStringEncoder):

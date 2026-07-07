@@ -6,6 +6,7 @@
 #
 import sys
 import unittest
+from datetime import datetime, timezone
 
 from tests.base import BaseTestCase
 
@@ -14,7 +15,9 @@ from pyasn1.type import tag
 from pyasn1.type import namedtype
 from pyasn1.type import opentype
 from pyasn1.type import univ
+from pyasn1.type import useful
 from pyasn1.codec.der import encoder
+from pyasn1.codec.der import decoder
 
 
 class OctetStringEncoderTestCase(BaseTestCase):
@@ -698,6 +701,20 @@ class ClassConstructorTestCase(BaseTestCase):
         sie = encoder.Encoder(tagmap, typemap)._singleItemEncoder
         self.assertIs(sie._tagMap, tagmap)
         self.assertIs(sie._typeMap, typemap)
+
+
+class GeneralizedTimeEncoderTestCase(BaseTestCase):
+    def testFromDateTimeMicroseconds(self):
+        # DER reuses the CER GeneralizedTime encoder, so the microsecond
+        # precision fromDateTime() emits ('YYYYMMDDHHMMSS.ffffffZ', 22 chars)
+        # must encode and round-trip rather than hitting a length constraint.
+        gt = useful.GeneralizedTime.fromDateTime(
+            datetime(2017, 7, 11, 0, 1, 2, 123456, tzinfo=timezone.utc))
+        encoded = encoder.encode(gt)
+        assert encoded == bytes((24, 22)) + b'20170711000102.123456Z'
+        decoded, rest = decoder.decode(encoded)
+        assert not rest
+        assert str(decoded) == '20170711000102.123456Z'
 
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
