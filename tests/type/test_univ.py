@@ -752,8 +752,48 @@ class RealTestCase(BaseTestCase):
     def testFloat(self):
         assert float(univ.Real(4.0)) == 4.0, '__float__() fails'
 
+    def testFloatBase10Precision(self):
+        assert float(univ.Real((3, 10, 23))) == 3e23, '__float__() lost base-10 behavior'
+
+    def testFloatOverflow(self):
+        try:
+            float(univ.Real((1, 2, 1000000)))
+        except OverflowError:
+            pass
+        else:
+            assert 0, '__float__() tolerated overflow'
+
+        assert univ.Real((1, 2, 1000000)).prettyPrint() == '<overflow>'
+
+    def testFloatUnderflow(self):
+        assert float(univ.Real((1, 2, -1000000))) == 0.0, '__float__() failed underflow'
+
+    def testFloatZeroMantissa(self):
+        assert float(univ.Real((0, 10, 1000000000))) == 0.0, '__float__() failed zero mantissa'
+        assert float(univ.Real((0, 2, 1000000000))) == 0.0, '__float__() failed zero mantissa'
+
+    def testFloatBase10Overflow(self):
+        try:
+            float(univ.Real((1, 10, sys.float_info.max_10_exp + 1)))
+        except OverflowError:
+            pass
+        else:
+            assert 0, '__float__() tolerated base-10 overflow'
+
+    def testFloatBase10NormalizedOverflow(self):
+        try:
+            float(univ.Real((10, 10, sys.float_info.max_10_exp)))
+        except OverflowError:
+            pass
+        else:
+            assert 0, '__float__() tolerated normalized base-10 overflow'
+
     def testPrettyIn(self):
         assert univ.Real((3, 10, 0)) == 3, 'prettyIn() fails'
+
+    def testPrettyInBigBase10Mantissa(self):
+        assert tuple(univ.Real((10 ** 400, 10, 0))) == (1, 10, 400), \
+            'prettyIn() big mantissa normalization fails'
 
     # infinite float values
     def testStrInf(self):

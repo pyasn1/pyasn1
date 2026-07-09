@@ -14,6 +14,7 @@ from pyasn1.type import namedtype
 from pyasn1.type import opentype
 from pyasn1.type import univ
 from pyasn1.codec.der import decoder
+from pyasn1.codec.der import encoder
 from pyasn1.error import PyAsn1Error
 
 
@@ -69,6 +70,24 @@ class OctetStringDecoderTestCase(BaseTestCase):
             pass
         else:
             assert 0, 'chunked encoding tolerated'
+
+
+class RealDecoderTestCase(BaseTestCase):
+    def testCanonicalLargeBinaryReal(self):
+        substrate = encoder.encode(univ.Real((1, 2, 1000000)))
+        assert substrate == bytes((9, 5, 0x82, 0x0f, 0x42, 0x40, 1))
+
+        value, rest = decoder.decode(substrate)
+
+        assert tuple(value) == (1, 2, 1000000)
+        assert rest == b''
+
+    def testLargeBinaryRoundTrip(self):
+        substrate = encoder.encode(univ.Real((-1, 2, 76354972)))
+        value, rest = decoder.decode(substrate)
+
+        assert tuple(value) == (-1, 2, 76354972)
+        assert rest == b''
 
 
 class SequenceDecoderWithUntaggedOpenTypesTestCase(BaseTestCase):

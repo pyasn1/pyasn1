@@ -1362,7 +1362,7 @@ class Real(base.SimpleAsn1Type):
     def __normalizeBase10(value):
         m, b, e = value
         while m and m % 10 == 0:
-            m /= 10
+            m //= 10
             e += 1
         return m, b, e
 
@@ -1490,10 +1490,21 @@ class Real(base.SimpleAsn1Type):
     def __float__(self):
         if self._value in self._inf:
             return self._value
-        else:
-            return float(
-                self._value[0] * pow(self._value[1], self._value[2])
-            )
+
+        mantissa, base, exponent = self._value
+
+        if not mantissa:
+            return 0.0
+
+        if base == 2:
+            return math.ldexp(float(mantissa), exponent)
+
+        # base is 10 (prettyIn() rejects everything else); refuse to
+        # materialize astronomically large integers via pow()
+        if exponent > sys.float_info.max_10_exp:
+            raise OverflowError('Real value too large to convert to float')
+
+        return float(mantissa * pow(base, exponent))
 
     def __abs__(self):
         return self.clone(abs(float(self)))

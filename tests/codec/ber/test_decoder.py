@@ -21,6 +21,7 @@ from pyasn1.type import univ
 from pyasn1.type import char
 from pyasn1.codec import streaming
 from pyasn1.codec.ber import decoder
+from pyasn1.codec.ber import encoder
 from pyasn1.codec.ber import eoo
 from pyasn1 import error
 
@@ -680,17 +681,51 @@ class RealDecoderTestCase(BaseTestCase):
             bytes((9, 4, 161, 255, 1, 3))
         ) == (univ.Real((3, 2, -1020)), b'')
 
-# TODO: this requires Real type comparison fix
+    def testBin6(self):  # large exponent, base = 16
+        value, rest = decoder.decode(
+            bytes((9, 5, 162, 0, 255, 255, 1))
+        )
 
-#    def testBin6(self):
-#        assert decoder.decode(
-#            bytes((9, 5, 162, 0, 255, 255, 1))
-#        ) == (univ.Real((1, 2, 262140)), b'')
+        assert tuple(value) == (1, 2, 262140)
+        assert rest == b''
 
-#    def testBin7(self):
-#        assert decoder.decode(
-#            bytes((9, 7, 227, 4, 1, 35, 69, 103, 1))
-#        ) == (univ.Real((-1, 2, 76354972)), b'')
+    def testBin7(self):  # large exponent in 4-octet form, base = 16
+        value, rest = decoder.decode(
+            bytes((9, 7, 227, 4, 1, 35, 69, 103, 1))
+        )
+
+        assert tuple(value) == (-1, 2, 76354972)
+        assert rest == b''
+
+    def testLargeBinaryRoundTrip(self):
+        substrate = encoder.encode(univ.Real((-1, 2, 76354972)))
+        value, rest = decoder.decode(substrate)
+
+        assert tuple(value) == (-1, 2, 76354972)
+        assert rest == b''
+
+    def testLongFormBinaryRealExponentLength(self):
+        value, rest = decoder.decode(
+            bytes((9, 6, 0x83, 3, 0x0f, 0x42, 0x40, 1))
+        )
+
+        assert tuple(value) == (1, 2, 1000000)
+        assert rest == b''
+
+    def testLargeBinaryPrettyPrintOverflow(self):
+        value, rest = decoder.decode(
+            b'\t\t\xeb\x060662.666\xd0B\x00\x00\x00\x00\x00\x00\x00'
+        )
+
+        assert value.prettyPrint() == '<overflow>'
+        assert rest == b'6\xd0B\x00\x00\x00\x00\x00\x00\x00'
+
+        try:
+            float(value)
+        except OverflowError:
+            pass
+        else:
+            assert 0, '__float__() tolerated overflow'
 
     def testPlusInf(self):
         assert decoder.decode(
