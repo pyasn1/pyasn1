@@ -72,6 +72,21 @@ class OctetStringDecoderTestCase(BaseTestCase):
             assert 0, 'chunked encoding tolerated'
 
 
+class LargeTagDecoderTestCase(BaseTestCase):
+    def testExcessiveLongTag(self):
+        # 1 << 140 is the smallest tag ID needing 21 octets, one over the limit
+        excessiveTag = tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1 << 140)
+        asn1Spec = univ.Integer().subtype(implicitTag=excessiveTag)
+        substrate = encoder.encode(univ.Integer(1).subtype(implicitTag=excessiveTag))
+
+        try:
+            decoder.decode(substrate, asn1Spec=asn1Spec)
+        except PyAsn1Error:
+            pass
+        else:
+            assert 0, 'excessive long tag tolerated'
+
+
 class RealDecoderTestCase(BaseTestCase):
     def testCanonicalLargeBinaryReal(self):
         substrate = encoder.encode(univ.Real((1, 2, 1000000)))

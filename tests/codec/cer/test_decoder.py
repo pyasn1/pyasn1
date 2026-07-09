@@ -66,6 +66,21 @@ class OctetStringDecoderTestCase(BaseTestCase):
     # TODO: test failures on short chunked and long unchunked substrate samples
 
 
+class LargeTagDecoderTestCase(BaseTestCase):
+    def testExcessiveLongTag(self):
+        # 1 << 140 is the smallest tag ID needing 21 octets, one over the limit
+        excessiveTag = tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1 << 140)
+        asn1Spec = univ.Integer().subtype(implicitTag=excessiveTag)
+        substrate = encoder.encode(univ.Integer(1).subtype(implicitTag=excessiveTag))
+
+        try:
+            decoder.decode(substrate, asn1Spec=asn1Spec)
+        except PyAsn1Error:
+            pass
+        else:
+            assert 0, 'excessive long tag tolerated'
+
+
 class RealDecoderTestCase(BaseTestCase):
     def testLargeBinaryRoundTrip(self):
         substrate = encoder.encode(univ.Real((-1, 2, 76354972)))

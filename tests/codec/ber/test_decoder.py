@@ -33,6 +33,31 @@ class LargeTagDecoderTestCase(BaseTestCase):
     def testLongTag(self):
         assert decoder.decode(bytes((0x1f, 2, 1, 0)))[0].tagSet == univ.Integer.tagSet
 
+    def testVeryLongTagRoundTrip(self):
+        # (1 << 140) - 1 is the largest tag ID fitting the 20 octet limit
+        for tagId in (1 << 77, (1 << 140) - 1):
+            largeTag = tag.Tag(tag.tagClassContext, tag.tagFormatSimple, tagId)
+            asn1Spec = univ.Integer().subtype(implicitTag=largeTag)
+            value = univ.Integer(1).subtype(implicitTag=largeTag)
+
+            decoded, rest = decoder.decode(encoder.encode(value), asn1Spec=asn1Spec)
+
+            assert rest == b''
+            assert decoded == 1
+
+    def testExcessiveLongTag(self):
+        # 1 << 140 is the smallest tag ID needing 21 octets, one over the limit
+        excessiveTag = tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1 << 140)
+        asn1Spec = univ.Integer().subtype(implicitTag=excessiveTag)
+        substrate = encoder.encode(univ.Integer(1).subtype(implicitTag=excessiveTag))
+
+        try:
+            decoder.decode(substrate, asn1Spec=asn1Spec)
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'excessive long tag tolerated'
+
     def testTagsEquivalence(self):
         integer = univ.Integer(2).subtype(implicitTag=tag.Tag(tag.tagClassContext, 0, 0))
         assert decoder.decode(bytes((0x9f, 0x80, 0x00, 0x02, 0x01, 0x02)), asn1Spec=integer) == decoder.decode(

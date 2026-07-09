@@ -34,6 +34,16 @@ tagCategoryExplicit = 0x02
 tagCategoryUntagged = 0x04
 
 
+def _tagIdToStr(tagId):
+    # Decimal rendering of a huge tag ID can exceed the interpreter's
+    # integer-to-string conversion limit (sys.get_int_max_str_digits(),
+    # Python 3.11+) and raise ValueError; hexadecimal is not limited
+    try:
+        return str(tagId)
+    except ValueError:
+        return hex(tagId)
+
+
 class Tag(object):
     """Create ASN.1 tag
 
@@ -56,7 +66,8 @@ class Tag(object):
     """
     def __init__(self, tagClass, tagFormat, tagId):
         if tagId < 0:
-            raise error.PyAsn1Error('Negative tag ID (%s) not allowed' % tagId)
+            raise error.PyAsn1Error(
+                'Negative tag ID (%s) not allowed' % _tagIdToStr(tagId))
         self.__tagClass = tagClass
         self.__tagFormat = tagFormat
         self.__tagId = tagId
@@ -65,7 +76,7 @@ class Tag(object):
 
     def __repr__(self):
         representation = '[%s:%s:%s]' % (
-            self.__tagClass, self.__tagFormat, self.__tagId)
+            self.__tagClass, self.__tagFormat, _tagIdToStr(self.__tagId))
         return '<%s object, tag %s>' % (
             self.__class__.__name__, representation)
 
@@ -194,8 +205,9 @@ class TagSet(object):
         self.__hash = hash(self.__superTagsClassId)
 
     def __repr__(self):
-        representation = '-'.join(['%s:%s:%s' % (x.tagClass, x.tagFormat, x.tagId)
-                                   for x in self.__superTags])
+        representation = '-'.join(
+            ['%s:%s:%s' % (x.tagClass, x.tagFormat, _tagIdToStr(x.tagId))
+             for x in self.__superTags])
         if representation:
             representation = 'tags ' + representation
         else:

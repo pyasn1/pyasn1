@@ -9,6 +9,7 @@ import unittest
 
 from tests.base import BaseTestCase
 
+from pyasn1 import error
 from pyasn1.type import tag
 
 
@@ -22,6 +23,19 @@ class TagTestCaseBase(BaseTestCase):
 class TagReprTestCase(TagTestCaseBase):
     def testRepr(self):
         assert 'Tag' in repr(self.t1)
+
+    def testReprHugeTagId(self):
+        # must not hit the interpreter's int-to-str conversion limit
+        hugeTag = tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1 << 100000)
+        assert 'Tag' in repr(hugeTag)
+
+    def testNegativeHugeTagId(self):
+        try:
+            tag.Tag(tag.tagClassContext, tag.tagFormatSimple, -(1 << 100000))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'negative tag ID tolerated'
 
 
 class TagCmpTestCase(TagTestCaseBase):
@@ -53,6 +67,12 @@ class TagSetTestCaseBase(BaseTestCase):
 class TagSetReprTestCase(TagSetTestCaseBase):
     def testRepr(self):
         assert 'TagSet' in repr(self.ts1)
+
+    def testReprHugeTagId(self):
+        # must not hit the interpreter's int-to-str conversion limit
+        hugeTagSet = self.ts1.tagImplicitly(
+            tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1 << 100000))
+        assert 'TagSet' in repr(hugeTagSet)
 
 
 class TagSetCmpTestCase(TagSetTestCaseBase):
