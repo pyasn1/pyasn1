@@ -1,4 +1,4 @@
-Revision 0.6.4, released XX-XX-2026
+Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
 - Fixed OverflowError from BER/CER/DER length values that fit in the
@@ -17,6 +17,33 @@ Revision 0.6.4, released XX-XX-2026
   preserves component absence when inspected with ``instantiate=False``.
   Applications relying on ``encode()`` to populate defaulted components
   should explicitly instantiate or set those components before encoding.
+
+Revision 0.6.4, released 08-07-2026
+---------------------------------------
+
+- CVE-2026-59885 (GHSA-8ppf-4f7h-5ppj): Fixed quadratic time
+  complexity in the OBJECT IDENTIFIER and RELATIVE-OID decoders.
+  A small crafted substrate encoding many arcs could consume
+  excessive CPU. Arcs are now accumulated in linear time; decoded
+  values are unchanged (thanks for reporting, tynus2)
+- CVE-2026-59884 (GHSA-m4p7-r5rc-7g4j): Limited BER long-form tag
+  IDs to 20 octets (140 bits), matching the OID arc limit introduced
+  in 0.6.2. Unbounded tag IDs allowed a crafted substrate to consume
+  excessive CPU and memory; longer tag IDs are now rejected with
+  PyAsn1Error. Also fixed Tag and TagSet repr() failing on huge tag
+  (thanks for reporting, mikeappsec)
+  IDs due to the integer-to-string conversion limit (Python 3.11+)
+- CVE-2026-59886 (GHSA-hm4w-wwcw-mr6r): Fixed excessive memory and
+  CPU consumption in Real.__float__() for values with large base-10
+  exponents. Conversion no longer materializes huge intermediate
+  integers; values too large to represent as a Python float raise
+  OverflowError promptly, and prettyPrint() renders them as
+  '<overflow>' as before. Also fixed base-10 mantissa normalization
+  to use exact integer arithmetic; mantissas larger than 2**53
+  could previously lose precision through float division
+  (thanks for reporting, gvozdila)
+- Pinned PyPI publish GitHub Action to an immutable commit
+  [pr #113](https://github.com/pyasn1/pyasn1/pull/113)
 
 Revision 0.6.3, released 16-03-2026
 ---------------------------------------
