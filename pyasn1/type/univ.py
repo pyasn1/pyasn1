@@ -557,8 +557,14 @@ class BitString(base.SimpleAsn1Type):
     def asBinary(self):
         """Get |ASN.1| value as a text string of bits.
         """
-        binString = bin(self._value)[2:]
-        return '0' * (len(self._value) - len(binString)) + binString
+        try:
+            binString = bin(self._value)[2:]
+            return '0' * (len(self._value) - len(binString)) + binString
+        except ValueError:
+            raise error.PyAsn1Error(
+                'Failed to convert BitString to binary: '
+                'malformed value with invalid bit length'
+            )
 
     @classmethod
     def fromHexString(cls, value, internalFormat=False, prepend=None):
