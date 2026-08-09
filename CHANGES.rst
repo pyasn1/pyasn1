@@ -17,6 +17,10 @@ Revision 0.7.0, released XX-XX-2026
   preserves component absence when inspected with ``instantiate=False``.
   Applications relying on ``encode()`` to populate defaulted components
   should explicitly instantiate or set those components before encoding.
+- Expanded SECURITY.md with the project's vulnerability scope: what
+  qualifies for a private advisory and a CVE versus what is handled
+  as an ordinary public bug report
+  [issue #96](https://github.com/pyasn1/pyasn1/issues/96)
 
 Revision 0.6.4, released 08-07-2026
 ---------------------------------------
