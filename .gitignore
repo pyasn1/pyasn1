@@ -25,3 +25,19 @@ docs/source/.templates/layout.html
 
 # Virtual envs
 venv*
+.venv/
+
+# macOS
+.DS_Store
+
+# Advisory patches and downstream backports: generated with git format-patch
+# and passed to distributors out of band, never committed
+*.patch
+*.diff
+
+# Lock files from tooling this project does not use (pyasn1 has no runtime deps)
+uv.lock
+
+# Agent tooling: skills under .agents/ and the .claude/skills symlink are
+# tracked on purpose; only machine-local agent settings are ignored.
+.claude/settings.local.json
