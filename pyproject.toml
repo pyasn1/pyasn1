@@ -47,7 +47,7 @@ dynamic = ["version"]
 "Documentation" = "https://pyasn1.readthedocs.io"
 "Source" = "https://github.com/pyasn1/pyasn1"
 "Issues" = "https://github.com/pyasn1/pyasn1/issues"
-"Changelog" = "https://pyasn1.readthedocs.io/en/latest/changelog.html"
+"Changelog" = "https://github.com/pyasn1/pyasn1/blob/main/CHANGES.rst"
 
 [tool.setuptools]
 zip-safe = true
