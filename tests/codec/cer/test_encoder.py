@@ -6,6 +6,7 @@
 #
 import sys
 import unittest
+from datetime import datetime, timezone
 
 from tests.base import BaseTestCase
 
@@ -15,6 +16,7 @@ from pyasn1.type import opentype
 from pyasn1.type import univ
 from pyasn1.type import useful
 from pyasn1.codec.cer import encoder
+from pyasn1.codec.ber import decoder
 from pyasn1.error import PyAsn1Error
 
 
@@ -94,10 +96,53 @@ class GeneralizedTimeEncoderTestCase(BaseTestCase):
                 useful.GeneralizedTime('20170801120112.59Z')
              ) == bytes((24, 18, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 53, 57, 90))
 
-    def testWithSubsecondsWithZeros(self):
+    def testWithSubsecondsWithLeadingZero(self):
+        # Only *trailing* zeros of the fraction may be removed (X.690, 11.7).
+        # A leading zero is significant: .099 != .99
         assert encoder.encode(
                 useful.GeneralizedTime('20170801120112.099Z')
-             ) == bytes((24, 18, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 57, 57, 90))
+             ) == bytes((24, 19, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 48, 57, 57, 90))
+
+    def testWithSubsecondsWithSingleLeadingZero(self):
+        # .001 (one millisecond) must not collapse to .1 (100 milliseconds)
+        assert encoder.encode(
+                useful.GeneralizedTime('20170801120112.001Z')
+             ) == bytes((24, 19, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 48, 48, 49, 90))
+
+    def testWithSubsecondsWithEmbeddedZero(self):
+        # An embedded zero between non-zero digits is significant: .105 != .15
+        assert encoder.encode(
+                useful.GeneralizedTime('20170801120112.105Z')
+             ) == bytes((24, 19, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 49, 48, 53, 90))
+
+    def testWithSubsecondsTrailingZeroKeepsLeadingZero(self):
+        # Strip the trailing zero of .050 but keep the significant leading one
+        assert encoder.encode(
+                useful.GeneralizedTime('20170801120112.050Z')
+             ) == bytes((24, 18, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 48, 53, 90))
+
+    def testWithSubsecondsWithZeros(self):
+        # .010 -> .01: strip the trailing zero only
+        assert encoder.encode(
+                useful.GeneralizedTime('20170801120112.010Z')
+             ) == bytes((24, 18, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 48, 49, 90))
+
+    def testWithSubsecondsMultipleTrailingZeros(self):
+        # .200 -> .2: every trailing zero is stripped, not just one
+        assert encoder.encode(
+                useful.GeneralizedTime('20170801120112.200Z')
+             ) == bytes((24, 17, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 49, 50, 46, 50, 90))
+
+    def testSubsecondRoundTripIsIdempotent(self):
+        # A canonical timestamp must survive an encode -> decode -> encode
+        # cycle unchanged: the fraction must not be silently corrupted
+        # (.001 stays .001, not .1). This is the real-world X.509/CMS break,
+        # where a stored certificate timestamp is mangled on re-encoding.
+        encoded = encoder.encode(useful.GeneralizedTime('20170801120112.001Z'))
+        decoded, rest = decoder.decode(encoded)
+        assert not rest
+        assert str(decoded) == '20170801120112.001Z'
+        assert encoder.encode(decoded) == encoded
 
     def testWithSubsecondsMax(self):
         assert encoder.encode(
@@ -123,6 +168,18 @@ class GeneralizedTimeEncoderTestCase(BaseTestCase):
         assert encoder.encode(
                     useful.GeneralizedTime('201708011201Z')
              ) == bytes((24, 13, 50, 48, 49, 55, 48, 56, 48, 49, 49, 50, 48, 49, 90))
+
+    def testFromDateTimeMicroseconds(self):
+        # fromDateTime() emits microsecond precision (six fractional digits),
+        # so 'YYYYMMDDHHMMSS.ffffffZ' is 22 characters. CER/DER must admit that
+        # length instead of rejecting it with a length-constraint violation.
+        gt = useful.GeneralizedTime.fromDateTime(
+            datetime(2017, 7, 11, 0, 1, 2, 123456, tzinfo=timezone.utc))
+        encoded = encoder.encode(gt)
+        assert encoded == bytes((24, 22)) + b'20170711000102.123456Z'
+        decoded, rest = decoder.decode(encoded)
+        assert not rest
+        assert str(decoded) == '20170711000102.123456Z'
 
 
 class UTCTimeEncoderTestCase(BaseTestCase):

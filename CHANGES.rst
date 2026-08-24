@@ -1,6 +1,13 @@
 Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
+- Fixed CER/DER GeneralizedTime/UTCTime encoder deleting non-trailing zeros
+  from the fractional seconds, silently corrupting timestamps (e.g. .001
+  became .1). Only trailing zeros are stripped now, per X.690 11.7.
+  Also raised the CER/DER GeneralizedTime length limit so the microsecond
+  precision emitted by ``GeneralizedTime.fromDateTime()`` encodes instead of
+  failing with a length-constraint violation.
+  [pr #115](https://github.com/pyasn1/pyasn1/pull/115)
 - Fixed OverflowError from BER/CER/DER length values that fit in the
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.
