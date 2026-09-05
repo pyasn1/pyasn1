@@ -6,8 +6,12 @@
 #
 def to_bytes(value, signed=False, length=0):
     length = max(value.bit_length(), length)
+    if length == 0 and signed:
+        length = 1  # we want at least 1 bit to correctly represent 0
 
-    if signed and length % 8 == 0:
-        length += 1
+    high_bit_set = length > 0 and ((value >> (length - 1)) & 1) != 0 or False
 
-    return value.to_bytes(length // 8 + (length % 8 and 1 or 0), 'big', signed=signed)
+    if signed and (value >= 0 and high_bit_set or value < 0 and not high_bit_set):
+        length += 1  # add room for the sign bit
+
+    return value.to_bytes((length + 7) // 8, 'big', signed=signed)
