@@ -744,6 +744,13 @@ class PositiveIntegerTestCase(BaseTestCase):
         ) == bytes((2, 2, 127, 255))
 
 
+class ZeroIntegerTestCase(BaseTestCase):
+    def testZeroEncoder(self):
+        assert encoder.encode(
+            univ.Integer(0)
+        ) == bytes((2, 1, 0))
+
+
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
 
 if __name__ == '__main__':
