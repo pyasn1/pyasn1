@@ -200,6 +200,34 @@ class BitStringDecoderTestCase(BaseTestCase):
         else:
             assert 0, 'accepted mis-encoded bit-string constructed out of an integer'
 
+    def testEmptyFragmentDefMode(self):
+        # A constructed BIT STRING whose fragment carries no octets at all
+        # lacks the mandatory initial "unused bits" octet (X.690 8.6.2.3).
+        try:
+            decoder.decode(bytes((35, 2, 3, 0)))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'accepted constructed BIT STRING with an empty fragment'
+
+    def testEmptyFragmentIndefMode(self):
+        try:
+            decoder.decode(bytes((35, 128, 3, 0, 0, 0)))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'accepted constructed BIT STRING with an empty fragment'
+
+    def testEmptyFragmentIndefModePrimitiveTag(self):
+        # Reported in https://github.com/pyasn1/pyasn1/issues/119 -- used to
+        # raise IndexError instead of a descriptive PyAsn1Error.
+        try:
+            decoder.decode(bytes((3, 128, 96, 0, 0, 0)))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'accepted indefinite-length BIT STRING with an empty fragment'
+
 
 class OctetStringDecoderTestCase(BaseTestCase):
     def testDefMode(self):

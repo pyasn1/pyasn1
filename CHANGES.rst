@@ -21,6 +21,11 @@ Revision 0.7.0, released XX-XX-2026
   qualifies for a private advisory and a CVE versus what is handled
   as an ordinary public bug report
   [issue #96](https://github.com/pyasn1/pyasn1/issues/96)
+- Fixed IndexError leaking from the BER decoder when a constructed BIT
+  STRING contains a zero-length fragment, which lacks the mandatory
+  initial "unused bits" octet. Such fragments are now rejected with
+  PyAsn1Error in both the definite and indefinite length forms
+  [issue #119](https://github.com/pyasn1/pyasn1/issues/119)
 
 Revision 0.6.4, released 08-07-2026
 ---------------------------------------

@@ -241,6 +241,11 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
                 if isinstance(component, SubstrateUnderrunError):
                     yield component
 
+            if not component:
+                raise error.PyAsn1Error(
+                    'Missing initial octet in a constructed BIT STRING fragment'
+                )
+
             trailingBits = component[0]
             if trailingBits > 7:
                 raise error.PyAsn1Error(
@@ -286,6 +291,11 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
 
             if component is eoo.endOfOctets:
                 break
+
+            if not component:
+                raise error.PyAsn1Error(
+                    'Missing initial octet in a constructed BIT STRING fragment'
+                )
 
             trailingBits = component[0]
             if trailingBits > 7:
