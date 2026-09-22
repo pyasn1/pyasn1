@@ -19,6 +19,30 @@ from pyasn1.error import PyAsn1Error
 
 
 class BitStringDecoderTestCase(BaseTestCase):
+    def testEmptyWithPadding(self):
+        for asn1Spec in (None, univ.BitString()):
+            for padding in range(1, 8):
+                with self.subTest(schema=asn1Spec is not None, padding=padding):
+                    try:
+                        decoder.decode(bytes((3, 1, padding)), asn1Spec=asn1Spec)
+                    except PyAsn1Error as exc:
+                        assert 'padding' in str(exc)
+                    else:
+                        assert 0, 'non-zero padding in empty BIT STRING tolerated'
+
+    def testEmptyWithoutPadding(self):
+        for asn1Spec in (None, univ.BitString()):
+            value, rest = decoder.decode(bytes((3, 1, 0)), asn1Spec=asn1Spec)
+            assert len(value) == 0
+            assert value == ()
+            assert rest == b''
+
+    def testMaximumPadding(self):
+        for asn1Spec in (None, univ.BitString()):
+            value, rest = decoder.decode(bytes((3, 2, 7, 128)), asn1Spec=asn1Spec)
+            assert value.asBinary() == '1'
+            assert rest == b''
+
     def testShortMode(self):
         assert decoder.decode(
             bytes((3, 127, 6) + (170,) * 125 + (128,))

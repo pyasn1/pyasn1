@@ -1,6 +1,11 @@
 Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
+- Reject primitive BIT STRING encodings with non-zero padding but no value
+  octets in BER, CER and DER. Raise PyAsn1Error during decoding rather than
+  constructing a negative-length value that later raises ValueError.
+  [issue #120](https://github.com/pyasn1/pyasn1/issues/120)
+  (thanks for reporting, gvozdila; patch by saitakarcesme)
 - Fixed OverflowError from BER/CER/DER length values that fit in the
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.
