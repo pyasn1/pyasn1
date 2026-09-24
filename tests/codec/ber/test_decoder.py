@@ -244,6 +244,32 @@ class OctetStringDecoderTestCase(BaseTestCase):
             bytes((36, 128, 4, 4, 81, 117, 105, 99, 4, 4, 107, 32, 98, 114, 4, 4, 111, 119, 110, 32, 4, 3, 102, 111, 120, 0, 0))
         ) == (b'Quick brown fox', b'')
 
+    def testManyFragments(self):
+        fragments = b'\x04\x02AB' * 256
+
+        for substrate in (b'\x24' + encode_length(len(fragments)) + fragments,
+                          b'\x24\x80' + fragments + b'\x00\x00'):
+            for asn1Spec in (None, univ.OctetString()):
+                value, rest = decoder.decode(substrate, asn1Spec=asn1Spec)
+                assert value.asOctets() == b'AB' * 256
+                assert rest == b''
+
+    def testNestedIndefModeChunked(self):
+        substrate = bytes.fromhex('24 07 24 80 04 01 41 00 00')
+
+        for asn1Spec in (None, univ.OctetString()):
+            value, rest = decoder.decode(substrate, asn1Spec=asn1Spec)
+            assert value.asOctets() == b'A'
+            assert rest == b''
+
+    def testNestedDefModeChunked(self):
+        substrate = bytes.fromhex('24 05 24 03 04 01 41')
+
+        for asn1Spec in (None, univ.OctetString()):
+            value, rest = decoder.decode(substrate, asn1Spec=asn1Spec)
+            assert value.asOctets() == b'A'
+            assert rest == b''
+
     def testDefModeChunkedSubst(self):
         assert decoder.decode(
             bytes(
@@ -1875,6 +1901,14 @@ class AnyDecoderTestCase(BaseTestCase):
         assert decoder.decode(
             bytes((4, 3, 102, 111, 120)), asn1Spec=self.s
         ) == (univ.Any('\004\003fox'), b'')
+
+    def testManyIndefiniteLengthComponents(self):
+        fragments = b'\x04\x01A' * 128
+        substrate = b'\x30\x80' + fragments + b'\x00\x00'
+        value, rest = decoder.decode(substrate, asn1Spec=self.s)
+
+        assert value == b'\x30\x80' + fragments
+        assert rest == b''
 
     def testTaggedExIndefMode(self):
         s = univ.Any('\004\003fox').subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 4))

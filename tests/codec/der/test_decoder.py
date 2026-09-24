@@ -9,6 +9,7 @@ import unittest
 
 from tests.base import BaseTestCase
 
+from pyasn1.type import char
 from pyasn1.type import tag
 from pyasn1.type import namedtype
 from pyasn1.type import opentype
@@ -79,6 +80,21 @@ class OctetStringDecoderTestCase(BaseTestCase):
             pass
         else:
             assert 0, 'chunked encoding tolerated'
+
+    def testSchemaDrivenManyFragments(self):
+        fragments = b'\x04\x01A' * 64
+        value, rest = decoder.decode(b'\x24\x81\xc0' + fragments,
+                                     asn1Spec=univ.OctetString())
+
+        assert value.asOctets() == b'A' * 64
+        assert rest == b''
+
+    def testConstructedCharacterString(self):
+        fragments = b'\x0c\x01A' * 64
+        value, rest = decoder.decode(b'\x2c\x81\xc0' + fragments)
+
+        assert value == char.UTF8String(b'A' * 64)
+        assert rest == b''
 
 
 class LargeTagDecoderTestCase(BaseTestCase):

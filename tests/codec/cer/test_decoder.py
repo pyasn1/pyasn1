@@ -74,6 +74,16 @@ class OctetStringDecoderTestCase(BaseTestCase):
             bytes((36, 128, 4, 130, 3, 232) + (81,) * 1000 + (4, 1, 81, 0, 0))
         ) == (b'Q' * 1001, b'')
 
+    def testManyFragments(self):
+        fragments = b'\x04\x01A' * 64
+        definite = b'\x24\x81\xc0' + fragments
+        indefinite = b'\x24\x80' + fragments + b'\x00\x00'
+
+        for substrate in (definite, indefinite):
+            value, rest = decoder.decode(substrate, asn1Spec=univ.OctetString())
+            assert value.asOctets() == b'A' * 64
+            assert rest == b''
+
     # TODO: test failures on short chunked and long unchunked substrate samples
 
 
@@ -107,6 +117,16 @@ class RealDecoderTestCase(BaseTestCase):
         value, rest = decoder.decode(substrate)
 
         assert tuple(value) == (int.from_bytes(mantissa, 'big'), 2, 0)
+        assert rest == b''
+
+
+class AnyDecoderTestCase(BaseTestCase):
+    def testManyIndefiniteLengthComponents(self):
+        fragments = b'\x04\x01A' * 64
+        substrate = b'\x30\x80' + fragments + b'\x00\x00'
+        value, rest = decoder.decode(substrate, asn1Spec=univ.Any())
+
+        assert value == b'\x30\x80' + fragments
         assert rest == b''
 
 
