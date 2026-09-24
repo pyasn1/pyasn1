@@ -168,6 +168,27 @@ class BitStringDecoderTestCase(BaseTestCase):
             bytes((35, 128, 3, 2, 0, 169, 3, 2, 1, 138, 0, 0))
         ) == ((1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1), b'')
 
+    def testChunkedWithIntermediatePadding(self):
+        fragments = (b'\x03\x02\x03\x10' + b'\x03\x01\x00' +
+                     b'\x03\x02\x05\xa0' + b'\x03\x02\x01\x81')
+        expected = univ.BitString(binValue='000101011000000')
+
+        for substrate in (b'\x23' + encode_length(len(fragments)) + fragments,
+                          b'\x23\x80' + fragments + b'\x00\x00'):
+            for asn1Spec in (None, univ.BitString()):
+                value, rest = decoder.decode(substrate, asn1Spec=asn1Spec)
+                assert value == expected
+                assert len(value) == len(expected)
+                assert rest == b''
+
+    def testManyDefModeFragments(self):
+        fragments = b'\x03\x02\x00\x81' * 256
+        substrate = b'\x23' + encode_length(len(fragments)) + fragments
+        value, rest = decoder.decode(substrate)
+
+        assert value == univ.BitString.fromOctetString(b'\x81' * 256)
+        assert rest == b''
+
     def testDefModeChunkedSubst(self):
         assert decoder.decode(
             bytes((35, 8, 3, 2, 0, 169, 3, 2, 1, 138)),
