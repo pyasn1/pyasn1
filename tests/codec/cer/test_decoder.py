@@ -49,6 +49,17 @@ class BitStringDecoderTestCase(BaseTestCase):
             bytes((3, 127, 6) + (170,) * 125 + (128,))
         ) == (((1, 0) * 501), b'')
 
+    def testChunkedWithIntermediatePadding(self):
+        fragments = b'\x03\x02\x03\x10\x03\x02\x00\xa5'
+        expected = univ.BitString(binValue='0001010100101')
+
+        for substrate in (b'\x23\x08' + fragments,
+                          b'\x23\x80' + fragments + b'\x00\x00'):
+            value, rest = decoder.decode(substrate, asn1Spec=univ.BitString())
+            assert value == expected
+            assert len(value) == len(expected)
+            assert rest == b''
+
     # TODO: test failures on short chunked and long unchunked substrate samples
 
 

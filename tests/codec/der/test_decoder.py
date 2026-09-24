@@ -44,6 +44,15 @@ class BitStringDecoderTestCase(BaseTestCase):
         else:
             assert 0, 'chunked encoding tolerated'
 
+    def testSchemaDrivenChunkedWithIntermediatePadding(self):
+        fragments = b'\x03\x02\x03\x10\x03\x02\x00\xa5'
+        value, rest = decoder.decode(b'\x23\x08' + fragments,
+                                     asn1Spec=univ.BitString())
+
+        assert value == univ.BitString(binValue='0001010100101')
+        assert len(value) == 13
+        assert rest == b''
+
 
 class OctetStringDecoderTestCase(BaseTestCase):
     def testShortMode(self):

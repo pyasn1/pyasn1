@@ -174,6 +174,44 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
     protoComponent = univ.BitString(())
     supportConstructedForm = True
 
+    @staticmethod
+    def _appendFragment(assembled, component, bitLength):
+        trailingBits = component[0]
+        if trailingBits > 7:
+            raise error.PyAsn1Error(
+                'Trailing bits overflow %s' % trailingBits
+            )
+
+        payload = component[1:]
+        if not payload:
+            if trailingBits:
+                raise error.PyAsn1Error('Trailing bits overflow %s' % trailingBits)
+            return bitLength
+
+        if not trailingBits and not bitLength % 8:
+            assembled.extend(payload)
+            return bitLength + len(payload) * 8
+
+        for idx, byte in enumerate(payload):
+            significantBits = 8
+            if idx == len(payload) - 1:
+                significantBits -= trailingBits
+                byte >>= trailingBits
+
+            usedBits = bitLength % 8
+            if not usedBits:
+                assembled.append(byte << (8 - significantBits))
+            elif usedBits + significantBits <= 8:
+                assembled[-1] |= byte << (8 - usedBits - significantBits)
+            else:
+                remainingBits = usedBits + significantBits - 8
+                assembled[-1] |= byte >> remainingBits
+                assembled.append((byte << (8 - remainingBits)) & 0xff)
+
+            bitLength += significantBits
+
+        return bitLength
+
     def valueDecoder(self, substrate, asn1Spec,
                      tagSet=None, length=None, state=None,
                      decodeFun=None, substrateFun=None,
@@ -230,7 +268,8 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        bitString = self.protoComponent.fromOctetString(b'', internalFormat=True)
+        assembled = bytearray()
+        bitLength = 0
 
         current_position = substrate.tell()
 
@@ -241,16 +280,11 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
                 if isinstance(component, SubstrateUnderrunError):
                     yield component
 
-            trailingBits = component[0]
-            if trailingBits > 7:
-                raise error.PyAsn1Error(
-                    'Trailing bits overflow %s' % trailingBits
-                )
+            bitLength = self._appendFragment(assembled, component, bitLength)
 
-            bitString = self.protoComponent.fromOctetString(
-                component[1:], internalFormat=True,
-                prepend=bitString, padding=trailingBits
-            )
+        bitString = self.protoComponent.fromOctetString(
+            assembled, internalFormat=True, padding=(-bitLength) % 8
+        )
 
         yield self._createComponent(asn1Spec, tagSet, bitString, **options)
 
@@ -270,7 +304,8 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
         # All inner fragments are of the same type, treat them as octet string
         substrateFun = self.substrateCollector
 
-        bitString = self.protoComponent.fromOctetString(b'', internalFormat=True)
+        assembled = bytearray()
+        bitLength = 0
 
         while True:  # loop over fragments
 
@@ -287,16 +322,11 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
             if component is eoo.endOfOctets:
                 break
 
-            trailingBits = component[0]
-            if trailingBits > 7:
-                raise error.PyAsn1Error(
-                    'Trailing bits overflow %s' % trailingBits
-                )
+            bitLength = self._appendFragment(assembled, component, bitLength)
 
-            bitString = self.protoComponent.fromOctetString(
-                component[1:], internalFormat=True,
-                prepend=bitString, padding=trailingBits
-            )
+        bitString = self.protoComponent.fromOctetString(
+            assembled, internalFormat=True, padding=(-bitLength) % 8
+        )
 
         yield self._createComponent(asn1Spec, tagSet, bitString, **options)
 
