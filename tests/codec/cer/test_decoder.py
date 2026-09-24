@@ -89,6 +89,15 @@ class RealDecoderTestCase(BaseTestCase):
         assert tuple(value) == (-1, 2, 76354972)
         assert rest == b''
 
+    def testLongBinaryMantissa(self):
+        mantissa = b'\x80' + b'\x01' * 255
+        content = b'\x80\x00' + mantissa
+        substrate = b'\x09\x82\x01\x02' + content
+        value, rest = decoder.decode(substrate)
+
+        assert tuple(value) == (int.from_bytes(mantissa, 'big'), 2, 0)
+        assert rest == b''
+
 
 class SequenceDecoderWithUntaggedOpenTypesTestCase(BaseTestCase):
     def setUp(self):

@@ -765,6 +765,16 @@ class RealDecoderTestCase(BaseTestCase):
         assert tuple(value) == (-1, 2, 76354972)
         assert rest == b''
 
+    def testLongBinaryMantissa(self):
+        mantissa = b'\x80' + b'\x01' * 511
+        content = b'\x80\x00' + mantissa
+        substrate = b'\x09' + encode_length(len(content)) + content
+
+        for asn1Spec in (None, univ.Real()):
+            value, rest = decoder.decode(substrate, asn1Spec=asn1Spec)
+            assert tuple(value) == (int.from_bytes(mantissa, 'big'), 2, 0)
+            assert rest == b''
+
     def testLongFormBinaryRealExponentLength(self):
         value, rest = decoder.decode(
             bytes((9, 6, 0x83, 3, 0x0f, 0x42, 0x40, 1))
