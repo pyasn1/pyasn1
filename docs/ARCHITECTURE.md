@@ -1401,11 +1401,25 @@ In execution order:
   the definite or indefinite branch; the block also hosts the
   `recursiveFlag=False` compatibility shim. Constructed payload decoders
   work on an `asn1Spec.clone()` and read `componentType` from the clone,
-  never from the spec ([Recursive schemas](#recursive-schemas)).
+  never from the spec ([Recursive schemas](#recursive-schemas)). After a
+  definite-length `rawPayloadDecoder` read, if that one inner TLV does not
+  fill `length` and no `substrateFun` is in use, the substrate is rewound
+  and the tag is decoded again as a SEQUENCE/SEQUENCE OF. That is an
+  IMPLICIT constructed container (several TLVs). `_nestingLevel` is
+  restored before the retry so the failed EXPLICIT attempt does not spend
+  nesting budget. One inner TLV that fills the length stays the unwrapped
+  EXPLICIT value. An empty constructed value (no components) is an empty
+  SEQUENCE OF or SET OF value object; leaving it as `None` makes the parent
+  container fail its `isValue` check.
 - `stTryAsExplicitTag`: if the unmatched tag is constructed and
   non-universal, assume an EXPLICIT wrapper and install `rawPayloadDecoder`,
   which calls `decodeFun` again with the accumulated `tagSet`
-  (`RawPayloadDecoder.valueDecoder`). Otherwise fall to `defaultErrorState`.
+  (`RawPayloadDecoder.valueDecoder`). A definite length of zero installs
+  the SEQUENCE/SEQUENCE OF decoder instead, because there is no inner TLV.
+  A definite-length primitive non-universal tag also has no inner TLV
+  (IMPLICIT tagging erased the base type); it installs the OCTET STRING
+  decoder and keeps the contents opaque. Anything else falls to
+  `defaultErrorState`.
 - `stDumpRawValue` is the opt-in lenient mode (substitutes an
   `AnyPayloadDecoder`), reachable only when a subclass sets
   `defaultErrorState = stDumpRawValue`.

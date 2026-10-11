@@ -694,6 +694,19 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
                 tagSet=tag.TagSet(protoComponent.tagSet.baseTag, *tagSet.superTags)
             )
 
+        if asn1Object is None:
+            # No components (definite length 0, or indefinite length with
+            # an immediate end-of-contents). An empty SEQUENCE/SET cannot
+            # be told from SEQUENCE OF/SET OF; the OF form is the same
+            # guess the loop uses for a single component type. clear()
+            # makes a value object; clone() alone would stay a schema and
+            # break the parent container's isValue check.
+            protoComponent = self.protoSequenceComponent
+            asn1Object = protoComponent.clone(
+                tagSet=tag.TagSet(protoComponent.tagSet.baseTag, *tagSet.superTags)
+            )
+            asn1Object.clear()
+
         if LOG:
             LOG('guessed %r container type (pass `asn1Spec` to guide the '
                 'decoder)' % asn1Object)
@@ -1871,6 +1884,7 @@ class SingleItemDecoder(object):
                         yield asn1Object
 
                 original_position = substrate.tell()
+                nestingBeforeValue = options.get('_nestingLevel')
 
                 if length == -1:  # indef length
                     for value in concreteDecoder.indefLenValueDecoder(
@@ -1890,6 +1904,23 @@ class SingleItemDecoder(object):
 
                     bytesRead = substrate.tell() - original_position
                     if not substrateFun and bytesRead != length:
+                        # An unmatched constructed non-universal tag is tried
+                        # as an EXPLICIT wrapper, which consumes one inner TLV.
+                        # When that TLV does not fill the definite length, the
+                        # tag is an IMPLICIT constructed container (several
+                        # TLVs). Rewind and decode those TLVs as a SEQUENCE or
+                        # SEQUENCE OF. One inner TLV that fills the length
+                        # stays an unwrapped EXPLICIT value.
+                        if (concreteDecoder is rawPayloadDecoder and
+                                tagSet and
+                                tagSet[0].tagFormat == tag.tagFormatConstructed and
+                                tagSet[0].tagClass != tag.tagClassUniversal):
+                            substrate.seek(original_position)
+                            if nestingBeforeValue is not None:
+                                options['_nestingLevel'] = nestingBeforeValue
+                            concreteDecoder = self.TAG_MAP[univ.Sequence.tagSet]
+                            continue
+
                         raise PyAsn1Error(
                             "Read %s bytes instead of expected %s." % (bytesRead, length))
                     elif substrateFun and bytesRead > length:
@@ -1909,8 +1940,23 @@ class SingleItemDecoder(object):
                 if (tagSet and
                         tagSet[0].tagFormat == tag.tagFormatConstructed and
                         tagSet[0].tagClass != tag.tagClassUniversal):
-                    # Assume explicit tagging
-                    concreteDecoder = rawPayloadDecoder
+                    # Assume explicit tagging. If the single inner TLV does
+                    # not fill a definite length, stDecodeValue retries this
+                    # as an IMPLICIT constructed container. A definite length
+                    # of zero has no inner TLV, so it is an empty container.
+                    if length == 0:
+                        concreteDecoder = self.TAG_MAP[univ.Sequence.tagSet]
+                    else:
+                        concreteDecoder = rawPayloadDecoder
+                    state = stDecodeValue
+
+                elif (tagSet and length != -1 and
+                        tagSet[0].tagFormat != tag.tagFormatConstructed and
+                        tagSet[0].tagClass != tag.tagClassUniversal):
+                    # IMPLICIT tagging drops the base type. A definite-length
+                    # primitive non-universal tag has no inner TLV to recover
+                    # it from, so keep the contents as an opaque octet string.
+                    concreteDecoder = self.TAG_MAP[univ.OctetString.tagSet]
                     state = stDecodeValue
 
                 else:
