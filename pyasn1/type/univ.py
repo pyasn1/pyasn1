@@ -467,7 +467,7 @@ class BitString(base.SimpleAsn1Type):
 
     def __le__(self, other):
         other = self.prettyIn(other)
-        return len(self._value) <= len(other) or len(self._value) == len(other) and self._value <= other
+        return len(self._value) < len(other) or len(self._value) == len(other) and self._value <= other
 
     def __gt__(self, other):
         other = self.prettyIn(other)
@@ -475,7 +475,7 @@ class BitString(base.SimpleAsn1Type):
 
     def __ge__(self, other):
         other = self.prettyIn(other)
-        return len(self._value) >= len(other) or len(self._value) == len(other) and self._value >= other
+        return len(self._value) > len(other) or len(self._value) == len(other) and self._value >= other
 
     # Immutable sequence object protocol
 

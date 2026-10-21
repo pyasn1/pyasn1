@@ -372,6 +372,16 @@ class BitStringTestCase(BaseTestCase):
             namedValues=namedval.NamedValues(('Active', 0), ('Urgent', 1))
         )
 
+    def testComparisonOfEqualLength(self):
+        low, high = univ.BitString(binValue='10'), univ.BitString(binValue='11')
+        assert low <= high and not high <= low
+        assert high >= low and not low >= high
+        assert low <= low and low >= low
+
+    def testComparisonOfDifferentLength(self):
+        short, long = univ.BitString(binValue='11'), univ.BitString(binValue='000')
+        assert short < long and short <= long and not short >= long
+
     def testBinDefault(self):
 
         class BinDefault(univ.BitString):
