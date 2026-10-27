@@ -22,6 +22,24 @@ Revision 0.7.0, released XX-XX-2026
   as an ordinary public bug report
   [issue #96](https://github.com/pyasn1/pyasn1/issues/96)
 
+Revision 0.6.5, released 26-10-2026
+---------------------------------------
+
+- GHSA-mm57-4v3p-rchx: Decoded binary REAL mantissas in linear time
+  instead of repeatedly shifting a growing integer and slicing the
+  remaining bytes (thanks for reporting, manus-use, manus-pi, ucsurf,
+  adriank31)
+- GHSA-2qm8-x737-gmw5: Reassembled constructed BIT STRING fragments
+  in linear time while preserving their decoded bit values, including
+  intermediate fragment padding (thanks for reporting, manus-use)
+- GHSA-9m75-vc3g-4x39: Reassembled constructed OCTET STRING and
+  character-string fragments and indefinite-length ANY content in
+  linear time. Nested constructed OCTET STRING fragments now contribute
+  their decoded octets (thanks for reporting, alimony, manus-pi, adriank31)
+- GHSA-fm9c-5rcf-2q5p: Bounded schemaless container type tracking
+  after two distinct tag sets to prevent quadratic CPU use from
+  colliding long tag IDs (thanks for reporting, droideck)
+
 Revision 0.6.4, released 08-07-2026
 ---------------------------------------
 
