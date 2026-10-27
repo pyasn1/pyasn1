@@ -695,7 +695,10 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
                 break
 
             components.append(component)
-            componentTypes.add(component.tagSet)
+            # Two distinct types settle the choice; keep the set bounded
+            # to avoid quadratic comparisons for colliding tag hashes.
+            if len(componentTypes) < 2:
+                componentTypes.add(component.tagSet)
 
             # Now we have to guess is it SEQUENCE/SET or SEQUENCE OF/SET OF
             # The heuristics is:
