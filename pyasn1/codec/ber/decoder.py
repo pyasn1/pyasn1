@@ -247,6 +247,10 @@ class BitStringPayloadDecoder(AbstractSimplePayloadDecoder):
                     'Trailing bits overflow %s' % trailingBits
                 )
 
+            # X.690 8.6.2.3: an empty bit string has no unused bits.
+            if trailingBits and length == 1:
+                raise error.PyAsn1Error('Non-zero padding in empty BIT STRING')
+
             for chunk in readFromStream(substrate, length - 1, options):
                 if isinstance(chunk, SubstrateUnderrunError):
                     yield chunk

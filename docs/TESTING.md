@@ -40,7 +40,7 @@ python -m unittest tests.type.test_univ
 There is also a hand-registered aggregate runner, `python -m tests`, discussed
 under [suite registration](#suite-registration-the-silent-failure) below. It
 and `discover` should always report the same test count; both currently report
-1261 tests. A divergence means a module is missing from a `__main__.py` list.
+1270 tests. A divergence means a module is missing from a `__main__.py` list.
 
 ### The gates, and which Python version runs each
 
