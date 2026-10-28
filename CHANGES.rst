@@ -1,6 +1,15 @@
 Revision 0.7.0, released XX-XX-2026
 ---------------------------------------
 
+- Fixed schemaless BER/CER/DER decoding of non-universal tags whose
+  base type is not on the wire. A constructed tag is still unwrapped as
+  EXPLICIT when one inner TLV fills the definite length. When it does
+  not, or the length is zero, the contents are decoded as a SEQUENCE or
+  SEQUENCE OF. A definite-length primitive tag is kept as an opaque
+  octet string. An empty SEQUENCE or SET decodes as an empty value
+  instead of ``None``. An LDAP SearchRequest now decodes and re-encodes
+  without a schema
+  [issue #17](https://github.com/pyasn1/pyasn1/issues/17)
 - Fixed OverflowError from BER/CER/DER length values that fit in the
   supported 8-octet length field but exceed the platform maximum readable
   size. Such oversized definite lengths are now rejected with PyAsn1Error.

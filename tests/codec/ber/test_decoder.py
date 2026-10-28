@@ -23,6 +23,8 @@ from pyasn1.codec import streaming
 from pyasn1.codec.ber import decoder
 from pyasn1.codec.ber import encoder
 from pyasn1.codec.ber import eoo
+from pyasn1.codec.cer import decoder as cer_decoder
+from pyasn1.codec.der import decoder as der_decoder
 from pyasn1 import error
 
 
@@ -2598,6 +2600,126 @@ class NonStreamingCompatibilityTestCase(BaseTestCase):
             assert str(exc) == "error inside user function"
         else:
             raise AssertionError("decode() must not hide TypeError from inside user provided callback")
+
+
+class SchemalessNonUniversalTagDecoderTestCase(BaseTestCase):
+    # Issue #17: LDAP SearchRequest from OpenLDAP, base DN spelled "examle".
+    LDAP_SEARCH = (
+        '30560201026351041064633d6578616d6c652c64633d6f72670a0102'
+        '0a0100020100020100010100a02c870b6f626a656374436c617373'
+        'a31d040e73616d4163636f756e744e616d65040b6578616d706c65557365723000'
+    )
+
+    def testExplicitWrapperStillUnwrapped(self):
+        decoded, rest = decoder.decode(bytes.fromhex('a00302012a'))
+
+        assert rest == b''
+        assert decoded == 42
+
+    def testExplicitSequenceWrapperStillUnwrapped(self):
+        substrate = bytes.fromhex('a0083006020101020102')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert list(decoded) == [1, 2]
+        assert encoder.encode(decoded) == substrate
+
+    def testConstructedContextSequenceOf(self):
+        substrate = bytes.fromhex('a006020101020102')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert list(decoded) == [1, 2]
+        assert decoded.tagSet[0].tagClass == tag.tagClassContext
+        assert encoder.encode(decoded) == substrate
+
+    def testEmptyConstructedContext(self):
+        substrate = bytes.fromhex('a000')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert decoded.isValue
+        assert len(decoded) == 0
+        assert encoder.encode(decoded) == substrate
+
+    def testPrimitiveContextTagIsOpaque(self):
+        substrate = bytes.fromhex('8003020101')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert decoded == b'\x02\x01\x01'
+        assert decoded.tagSet[0].tagFormat == tag.tagFormatSimple
+        assert encoder.encode(decoded) == substrate
+
+    def testSchemaDecodesImplicitInteger(self):
+        spec = univ.Integer().subtype(
+            implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+        decoded, rest = decoder.decode(bytes.fromhex('810102'), asn1Spec=spec)
+
+        assert rest == b''
+        assert decoded == 2
+
+    def testEmptyUniversalSequence(self):
+        substrate = bytes.fromhex('3000')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert decoded.isValue
+        assert len(decoded) == 0
+        assert encoder.encode(decoded) == substrate
+
+    def testNestedEmptySequence(self):
+        substrate = bytes.fromhex('30023000')
+        decoded, rest = decoder.decode(substrate)
+
+        assert rest == b''
+        assert len(decoded) == 1
+        assert len(decoded[0]) == 0
+        assert encoder.encode(decoded) == substrate
+
+    def testIndefiniteEmptySequenceIsValue(self):
+        decoded, rest = decoder.decode(bytes.fromhex('30800000'))
+
+        assert rest == b''
+        assert decoded.isValue
+        assert len(decoded) == 0
+
+    def testTruncatedConstructedRejected(self):
+        try:
+            decoder.decode(bytes.fromhex('a006020101'))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'truncated constructed value decoded'
+
+    def testTrailingJunkRejected(self):
+        try:
+            decoder.decode(bytes.fromhex('a004020101ff'))
+        except error.PyAsn1Error:
+            pass
+        else:
+            assert 0, 'trailing junk inside constructed tag decoded'
+
+    def testLdapSearchRequestWithoutSchema(self):
+        substrate = bytes.fromhex(self.LDAP_SEARCH)
+
+        for decodeFun in (decoder.decode, der_decoder.decode, cer_decoder.decode):
+            decoded, rest = decodeFun(substrate)
+
+            assert rest == b''
+            assert decoded[0] == 2
+            search = decoded[1]
+            assert search[0] == b'dc=examle,dc=org'
+            assert search[1] == 2
+            assert search[5] == 0
+            assert search[6][0] == b'objectClass'
+            assert list(search[6][1]) == [b'samAccountName', b'exampleUser']
+            assert len(search[7]) == 0
+
+        decoded, rest = decoder.decode(substrate + b'\xff')
+
+        assert rest == b'\xff'
+        assert encoder.encode(decoded) == substrate
 
 
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
