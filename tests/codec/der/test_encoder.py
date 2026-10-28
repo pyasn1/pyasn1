@@ -700,6 +700,57 @@ class ClassConstructorTestCase(BaseTestCase):
         self.assertIs(sie._typeMap, typemap)
 
 
+class NegativeIntegerTestCase(BaseTestCase):
+    def testNegative127(self):
+        assert encoder.encode(
+            univ.Integer(-127)
+        ) == bytes((2, 1, 129))
+
+    def testNegative128(self):
+        assert encoder.encode(
+            univ.Integer(-128)
+        ) == bytes((2, 1, 128))
+
+    def testNegative32768(self):
+        assert encoder.encode(
+            univ.Integer(-32768)
+        ) == bytes((2, 2, 128, 0))
+
+    def testNegative32767(self):
+        assert encoder.encode(
+            univ.Integer(-32767)
+        ) == bytes((2, 2, 128, 1))
+
+
+class PositiveIntegerTestCase(BaseTestCase):
+    def testPositive127(self):
+        assert encoder.encode(
+            univ.Integer(127)
+        ) == bytes((2, 1, 127))
+
+    def testPositive128(self):
+        assert encoder.encode(
+            univ.Integer(128)
+        ) == bytes((2, 2, 0, 128))
+
+    def testPositive32768(self):
+        assert encoder.encode(
+            univ.Integer(32768)
+        ) == bytes((2, 3, 0, 128, 0))
+
+    def testPositive32767(self):
+        assert encoder.encode(
+            univ.Integer(32767)
+        ) == bytes((2, 2, 127, 255))
+
+
+class ZeroIntegerTestCase(BaseTestCase):
+    def testZeroEncoder(self):
+        assert encoder.encode(
+            univ.Integer(0)
+        ) == bytes((2, 1, 0))
+
+
 suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
 
 if __name__ == '__main__':
