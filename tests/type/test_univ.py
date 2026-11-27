@@ -416,6 +416,10 @@ class BitStringTestCase(BaseTestCase):
         assert self.b.clone("'A98A'H")[0] == 1
         assert self.b.clone("'A98A'H")[1] == 0
         assert self.b.clone("'A98A'H")[2] == 1
+        assert self.b.clone("'A98A'H")[0:8] == self.b.clone("'A9'H")
+        assert self.b.clone("'A98A'H")[8:16] == self.b.clone("'8A'H")
+        assert self.b.clone("'A98A'H")[8:8] == univ.BitString(())
+        assert self.b.clone("'A98A'H")[::2] == univ.BitString((1, 1, 1, 0, 1, 0, 1, 1))
 
     def testReverse(self):
         assert list(reversed(univ.BitString([0, 0, 1]))) == list(univ.BitString([1, 0, 0]))

@@ -213,15 +213,23 @@ class BitStringEncoder(AbstractItemEncoder):
             tagSet = tag.TagSet()
 
         alignedValue = alignedValue.clone(tagSet=tagSet)
+        octets = alignedValue.asOctets()
+        padding = len(octets) * 8 - valueLength
 
-        stop = 0
-        substrate = b''
-        while stop < valueLength:
-            start = stop
-            stop = min(start + maxChunkSize * 8, valueLength)
-            substrate += encodeFun(alignedValue[start:stop], asn1Spec, **options)
+        pos = 0
+        chunks = []
+        while pos < len(octets):
+            chunk = octets[pos:pos + maxChunkSize]
+            pos += maxChunkSize
+            chunkPadding = padding if pos >= len(octets) else 0
+            chunkValue = alignedValue.clone(
+                alignedValue.fromOctetString(
+                    chunk, internalFormat=True, padding=chunkPadding
+                )
+            )
+            chunks.append(encodeFun(chunkValue, asn1Spec, **options))
 
-        return substrate, True, True
+        return b''.join(chunks), True, True
 
 
 class OctetStringEncoder(AbstractItemEncoder):
@@ -272,17 +280,17 @@ class OctetStringEncoder(AbstractItemEncoder):
             asn1Spec = asn1Spec.clone(tagSet=tagSet)
 
         pos = 0
-        substrate = b''
+        chunks = []
 
         while True:
             chunk = value[pos:pos + maxChunkSize]
             if not chunk:
                 break
 
-            substrate += encodeFun(chunk, asn1Spec, **options)
+            chunks.append(encodeFun(chunk, asn1Spec, **options))
             pos += maxChunkSize
 
-        return substrate, True, True
+        return b''.join(chunks), True, True
 
 
 class NullEncoder(AbstractItemEncoder):
@@ -478,21 +486,24 @@ class RealEncoder(AbstractItemEncoder):
                 fo |= 0x40  # sign bit
 
             # exponent & mantissa normalization
+            trailingZeros = (m & -m).bit_length() - 1
             if encbase == 2:
-                while m & 0x1 == 0:
-                    m >>= 1
-                    e += 1
+                if trailingZeros:
+                    m >>= trailingZeros
+                    e += trailingZeros
 
             elif encbase == 8:
-                while m & 0x7 == 0:
-                    m >>= 3
-                    e += 1
+                steps = trailingZeros // 3
+                if steps:
+                    m >>= steps * 3
+                    e += steps
                 fo |= 0x10
 
             else:  # encbase = 16
-                while m & 0xf == 0:
-                    m >>= 4
-                    e += 1
+                steps = trailingZeros // 4
+                if steps:
+                    m >>= steps * 4
+                    e += steps
                 fo |= 0x20
 
             sf = 0  # scale factor
@@ -537,11 +548,7 @@ class RealEncoder(AbstractItemEncoder):
                 fo |= 3
                 eo = bytes((n & 0xff,)) + eo
 
-            po = b''
-
-            while m:
-                po = bytes((m & 0xff,)) + po
-                m >>= 8
+            po = to_bytes(m, signed=False)
 
             substrate = bytes((fo,)) + eo + po
 
