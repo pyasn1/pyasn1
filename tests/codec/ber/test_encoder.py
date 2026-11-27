@@ -461,6 +461,11 @@ class RealEncoderTestCase(BaseTestCase):
             # mantissa < 0
         ) == bytes((9, 7, 195, 4, 4, 141, 21, 156, 1))
 
+    def testLongBinaryMantissa(self):
+        mantissa = b'\x80' + b'\x01' * 511
+        value = univ.Real((int.from_bytes(mantissa, 'big'), 2, 0))
+        assert encoder.encode(value) == b'\x09\x82\x02\x02\x80\x00' + mantissa
+
     def testPlusInf(self):
         assert encoder.encode(univ.Real('inf')) == bytes((9, 1, 64))
 

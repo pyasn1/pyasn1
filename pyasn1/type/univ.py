@@ -484,7 +484,14 @@ class BitString(base.SimpleAsn1Type):
 
     def __getitem__(self, i):
         if i.__class__ is slice:
-            return self.clone([self[x] for x in range(*i.indices(len(self)))])
+            start, stop, step = i.indices(len(self))
+            if step == 1:
+                if stop <= start:
+                    return self.clone(SizedInteger(0).setBitLength(0))
+                length = stop - start
+                value = (int(self._value) >> (len(self._value) - stop)) & ((1 << length) - 1)
+                return self.clone(SizedInteger(value).setBitLength(length))
+            return self.clone([self[x] for x in range(start, stop, step)])
         else:
             length = len(self._value) - 1
             if i > length or i < 0:

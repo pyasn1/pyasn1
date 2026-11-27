@@ -35,6 +35,11 @@ class BitStringEncoderTestCase(BaseTestCase):
     def testLongMode(self):
         assert encoder.encode(univ.BitString((1, 0) * 501)) == bytes((3, 127, 6) + (170,) * 125 + (128,))
 
+    def testChunkedMode(self):
+        assert encoder.encode(
+            univ.BitString((1, 0) * 4001)
+        ) == bytes((35, 128, 3, 130, 3, 233, 0) + (170,) * 1000 + (3, 2, 6, 128, 0, 0))
+
 
 class OctetStringEncoderTestCase(BaseTestCase):
     def testShortMode(self):
