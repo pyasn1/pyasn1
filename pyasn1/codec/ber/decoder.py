@@ -1409,12 +1409,9 @@ class AnyPayloadDecoder(AbstractSimplePayloadDecoder):
             if LOG:
                 LOG('decoding as untagged ANY, header substrate %s' % debug.hexdump(chunk))
 
-        # Any components do not inherit initial tag
-        asn1Spec = self.protoComponent
-
         if substrateFun and substrateFun is not self.substrateCollector:
             asn1Object = self._createComponent(
-                asn1Spec, tagSet, noValue, **options)
+                self.protoComponent, tagSet, noValue, **options)
 
             for chunk in substrateFun(
                     asn1Object, chunk + substrate, length + len(chunk), options):
@@ -1425,15 +1422,14 @@ class AnyPayloadDecoder(AbstractSimplePayloadDecoder):
         if LOG:
             LOG('assembling constructed serialization')
 
-        # All inner fragments are of the same type, treat them as octet string
-        substrateFun = self.substrateCollector
-
         fragments = [chunk]
 
         while True:  # loop over fragments
 
+            # All inner fragments are of the same type, treat them as octet string
             for component in decodeFun(
-                    substrate, asn1Spec, substrateFun=substrateFun,
+                    substrate, self.protoComponent,
+                    substrateFun=self.substrateCollector,
                     allowEoo=True, **options):
 
                 if isinstance(component, SubstrateUnderrunError):
@@ -1443,6 +1439,8 @@ class AnyPayloadDecoder(AbstractSimplePayloadDecoder):
                     break
 
             if component is eoo.endOfOctets:
+                if not isTagged:
+                    fragments.append(EOO_SENTINEL)
                 break
 
             fragments.append(component)
@@ -1450,7 +1448,7 @@ class AnyPayloadDecoder(AbstractSimplePayloadDecoder):
         chunk = b''.join(fragments)
 
         if substrateFun:
-            yield chunk  # TODO: Weird
+            yield chunk
 
         else:
             yield self._createComponent(asn1Spec, tagSet, chunk, **options)

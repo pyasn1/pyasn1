@@ -1353,6 +1353,13 @@ class SequenceDecoderWithUntaggedOpenTypesTestCase(BaseTestCase):
         assert s[0] == 2
         assert s[1] == bytes((4, 11, 113, 117, 105, 99, 107, 32, 98, 114, 111, 119, 110))
 
+    def testDecodeOpenTypesIndefMode(self):
+        substrate = bytes.fromhex('30 0e 02 01 02 24 80 04 02 61 62 04 01 63 00 00')
+        s, r = decoder.decode(substrate, asn1Spec=self.s, decodeOpenTypes=True)
+        assert not r
+        assert s[0] == 2
+        assert s[1] == univ.OctetString('abc')
+
 
 class SequenceDecoderWithImplicitlyTaggedOpenTypesTestCase(BaseTestCase):
     def setUp(self):
@@ -1949,8 +1956,31 @@ class AnyDecoderTestCase(BaseTestCase):
         substrate = b'\x30\x80' + fragments + b'\x00\x00'
         value, rest = decoder.decode(substrate, asn1Spec=self.s)
 
-        assert value == b'\x30\x80' + fragments
+        assert value == substrate
+        assert isinstance(value, univ.Any)
         assert rest == b''
+
+    def testIndefModePreservesEoo(self):
+        substrate = bytes.fromhex('24 80 04 00 00 00')
+        value, rest = decoder.decode(substrate, asn1Spec=self.s)
+
+        assert value == substrate
+        assert isinstance(value, univ.Any)
+        assert rest == b''
+        redecoded, trail = decoder.decode(bytes(value), asn1Spec=univ.OctetString())
+        assert redecoded == b''
+        assert trail == b''
+
+    def testNestedIndefModePreservesEoo(self):
+        substrate = bytes.fromhex('30 80 24 80 04 01 41 00 00 00 00')
+        value, rest = decoder.decode(substrate, asn1Spec=self.s)
+
+        assert value == substrate
+        assert isinstance(value, univ.Any)
+        assert rest == b''
+        redecoded, trail = decoder.decode(bytes(value))
+        assert redecoded == [b'A']
+        assert trail == b''
 
     def testTaggedExIndefMode(self):
         s = univ.Any('\004\003fox').subtype(explicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 4))

@@ -126,7 +126,16 @@ class AnyDecoderTestCase(BaseTestCase):
         substrate = b'\x30\x80' + fragments + b'\x00\x00'
         value, rest = decoder.decode(substrate, asn1Spec=univ.Any())
 
-        assert value == b'\x30\x80' + fragments
+        assert value == substrate
+        assert isinstance(value, univ.Any)
+        assert rest == b''
+
+    def testIndefModePreservesEoo(self):
+        substrate = bytes.fromhex('24 80 04 00 00 00')
+        value, rest = decoder.decode(substrate, asn1Spec=univ.Any())
+
+        assert value == substrate
+        assert isinstance(value, univ.Any)
         assert rest == b''
 
 
