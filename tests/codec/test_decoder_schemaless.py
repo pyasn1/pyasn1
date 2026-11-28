@@ -88,6 +88,54 @@ class SchemalessContainerDecoderTestCase(BaseTestCase):
                 self._assertValue(value, sequenceType, tagIds)
                 assert tail == b''
 
+    def testEmpty(self):
+        for codec, container in product(self.codecs, self.containers):
+            name, decoder, indefinite = codec
+            containerTag, sequenceType, recordType = container
+            with self.subTest(codec=name, container=sequenceType):
+                value, tail = decoder.decode(
+                    self._encodeConstructed(
+                        bytes([containerTag]), b'', indefinite))
+                assert type(value) is sequenceType
+                assert value.isValue
+                assert len(value) == 0
+                assert tail == b''
+
+    def testNestedEmpty(self):
+        for codec, container in product(self.codecs, self.containers):
+            name, decoder, indefinite = codec
+            containerTag, sequenceType, recordType = container
+            with self.subTest(codec=name, container=recordType):
+                empty = self._encodeConstructed(
+                    bytes([containerTag]), b'', indefinite)
+                substrate = self._encodeConstructed(
+                    bytes([containerTag]), b'\x02\x01\x01' + empty, indefinite)
+                value, tail = decoder.decode(substrate)
+                assert type(value) is recordType
+                assert len(value) == 2
+                assert value.getComponentByPosition(0) == 1
+                nested = value.getComponentByPosition(1)
+                assert type(nested) is sequenceType
+                assert nested.isValue
+                assert len(nested) == 0
+                assert tail == b''
+
+    def testEmptyExplicitlyTagged(self):
+        for codec, container in product(self.codecs, self.containers):
+            name, decoder, indefinite = codec
+            containerTag, sequenceType, recordType = container
+            with self.subTest(codec=name, container=sequenceType):
+                empty = self._encodeConstructed(
+                    bytes([containerTag]), b'', indefinite)
+                substrate = self._encodeConstructed(b'\xa0', empty, indefinite)
+                value, tail = decoder.decode(substrate)
+                assert type(value) is sequenceType
+                assert value.isValue
+                assert len(value) == 0
+                assert value.tagSet == sequenceType.tagSet.tagExplicitly(
+                    tag.Tag(tag.tagClassContext, tag.tagFormatConstructed, 0))
+                assert tail == b''
+
     def testHeterogeneous(self):
         for codec, container, tagIds in product(
                 self.codecs, self.containers,

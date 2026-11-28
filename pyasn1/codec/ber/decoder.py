@@ -679,8 +679,6 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
             self, substrate, tagSet=None, decodeFun=None,
             length=None, **options):
 
-        asn1Object = None
-
         components = []
         componentTypes = set()
 
@@ -700,21 +698,22 @@ class ConstructedPayloadDecoderBase(AbstractConstructedPayloadDecoder):
             if len(componentTypes) < 2:
                 componentTypes.add(component.tagSet)
 
-            # Now we have to guess is it SEQUENCE/SET or SEQUENCE OF/SET OF
-            # The heuristics is:
-            # * 1+ components of different types -> likely SEQUENCE/SET
-            # * otherwise -> likely SEQUENCE OF/SET OF
-            if len(componentTypes) > 1:
-                protoComponent = self.protoRecordComponent
+        # Now we have to guess is it SEQUENCE/SET or SEQUENCE OF/SET OF
+        # The heuristics is:
+        # * 1+ components of different types -> likely SEQUENCE/SET
+        # * otherwise -> likely SEQUENCE OF/SET OF
+        if len(componentTypes) > 1:
+            protoComponent = self.protoRecordComponent
 
-            else:
-                protoComponent = self.protoSequenceComponent
+        else:
+            protoComponent = self.protoSequenceComponent
 
-            asn1Object = protoComponent.clone(
-                # construct tagSet from base tag from prototype ASN.1 object
-                # and additional tags recovered from the substrate
-                tagSet=tag.TagSet(protoComponent.tagSet.baseTag, *tagSet.superTags)
-            )
+        asn1Object = protoComponent.clone(
+            # construct tagSet from base tag from prototype ASN.1 object
+            # and additional tags recovered from the substrate
+            tagSet=tag.TagSet(protoComponent.tagSet.baseTag, *tagSet.superTags)
+        )
+        asn1Object.clear()
 
         if LOG:
             LOG('guessed %r container type (pass `asn1Spec` to guide the '
