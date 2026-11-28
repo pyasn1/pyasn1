@@ -108,6 +108,17 @@ class Decoder(decoder.Decoder):
 #:     being decoded, *asn1Spec* may or may not be required. Most common reason for
 #:     it to require is that ASN.1 structure is encoded in *IMPLICIT* tagging mode.
 #:
+#: decodeOpenTypes: :py:class:`bool`
+#:     If :obj:`True`, resolve and decode :py:class:`~pyasn1.type.opentype.OpenType`
+#:     components using the schema's open-type map. If :obj:`False` (default),
+#:     leave open-type components as raw encoded octets in
+#:     :py:class:`~pyasn1.type.univ.Any`.
+#:
+#: openTypes: :py:class:`dict`
+#:     Optional governing-value to ASN.1 type mapping used to decode
+#:     :py:class:`~pyasn1.type.opentype.OpenType` components. Overrides the
+#:     schema's open-type map when a matching governing value is present.
+#:
 #: Returns
 #: -------
 #: : :py:class:`tuple`

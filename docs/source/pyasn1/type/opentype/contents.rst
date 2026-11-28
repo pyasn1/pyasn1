@@ -108,6 +108,16 @@ constructs:
                      openType=OpenType('algorithm', algo_map))
        )
 
+By default, decoders leave open-type fields as raw encoded octets in
+:ref:`Any <univ.Any>`. Pass ``decodeOpenTypes=True`` to ``decode()`` to
+automatically resolve and decode open-type components using the schema's
+:ref:`OpenType <opentype.OpenType>` map, or pass ``openTypes={...}`` to
+supply a decode-time mapping:
+
+.. code-block:: python
+
+   decoded, _ = decode(substrate, asn1Spec=Algorithm(), decodeOpenTypes=True)
+
 .. toctree::
    :maxdepth: 2
 
